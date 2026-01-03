@@ -3,9 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Santa Flight - Aviation Service</title>
+    <title>Santa Flight — Aviation Service</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #0a0b14;
+            --bg-secondary: #12131f;
+            --bg-card: #1a1c2e;
+            --bg-card-hover: #222438;
+            --accent-blue: #4a6cf7;
+            --accent-blue-light: #6b8cff;
+            --accent-blue-dark: #3451d1;
+            --accent-gold: #f0b90b;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --accent-cyan: #00d4ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8892b0;
+            --text-tertiary: #5a6380;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -17,24 +39,28 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #0a0a1a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
         }
 
         .game-container {
             position: relative;
             width: 360px;
             height: 640px;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
         }
 
         #gameCanvas {
             position: absolute;
             top: 0;
             left: 0;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
         }
 
         /* ============ HUD ============ */
@@ -43,65 +69,103 @@
             top: 0;
             left: 0;
             width: 100%;
+            padding: 20px;
             pointer-events: none;
             z-index: 10;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.4s ease;
         }
 
-        .hud.visible {
-            opacity: 1;
+        .hud.visible { opacity: 1; }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .score-display {
+        .hud-score {
+            text-align: center;
+        }
+
+        .hud-score-value {
+            font-size: 52px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .hud-score-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        .hud-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .hud-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .hud-stat.gifts { color: var(--accent-gold); }
+        .hud-stat.speed { color: var(--accent-cyan); }
+
+        .shield-bar {
             position: absolute;
-            top: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 48px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-        }
-
-        .gift-counter {
-            position: absolute;
-            top: 75px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            color: #ffd700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .shield-indicator {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 25px;
             opacity: 0;
             transition: opacity 0.3s;
         }
 
-        .shield-indicator.active {
-            opacity: 1;
-            animation: pulse 0.5s infinite;
+        .shield-bar.active { opacity: 1; }
+
+        .shield-bar-icon { font-size: 18px; }
+
+        .shield-bar-progress {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.1); }
+        .shield-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue-light));
+            border-radius: 3px;
+            transition: width 0.1s linear;
         }
 
-        .speed-indicator {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+        .shield-bar-text {
             font-size: 12px;
-            color: rgba(255,255,255,0.7);
+            font-weight: 600;
+            color: var(--accent-cyan);
         }
 
         /* ============ SCREENS ============ */
@@ -113,12 +177,12 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            border-radius: 16px;
+            border-radius: 24px;
             z-index: 20;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.4s ease;
+            overflow: hidden;
         }
 
         .screen.active {
@@ -128,401 +192,535 @@
 
         /* ============ MAIN MENU ============ */
         .main-menu {
-            background: linear-gradient(180deg, rgba(10, 20, 60, 0.95) 0%, rgba(5, 10, 40, 0.98) 100%);
-            justify-content: flex-start;
-            padding-top: 40px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
         }
 
-        .logo-container {
+        .menu-bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a6cf7' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .menu-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 24px 30px;
+            height: 100%;
+        }
+
+        .logo-section {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--accent-red), #c0392b);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
         }
 
         .logo-icon {
-            font-size: 60px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            font-size: 48px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 20px rgba(74, 108, 247, 0.4));
         }
 
         .logo-title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(74, 108, 247, 0.8);
-            margin-top: 10px;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
         }
 
         .logo-subtitle {
-            font-size: 14px;
-            color: #8eb8ff;
-            letter-spacing: 3px;
-            margin-top: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .player-preview-container {
+            position: relative;
+            margin: 24px 0;
         }
 
         .player-preview {
-            width: 120px;
-            height: 100px;
-            margin: 20px 0;
-            animation: santaFloat 2s ease-in-out infinite;
+            width: 140px;
+            height: 115px;
+            animation: previewFloat 3s ease-in-out infinite;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
         }
 
-        @keyframes santaFloat {
-            0%, 100% { transform: translateY(0) rotate(-3deg); }
-            50% { transform: translateY(-15px) rotate(3deg); }
+        @keyframes previewFloat {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        .preview-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value.gold { color: var(--accent-gold); }
+
+        .stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .menu-buttons {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 20px;
-            width: 80%;
-            max-width: 250px;
+            width: 100%;
         }
 
-        .menu-btn {
-            padding: 16px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            padding: 16px 24px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .menu-btn.primary {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
-            font-size: 20px;
-            padding: 18px 30px;
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue-dark) 100%);
+            box-shadow: 0 8px 30px rgba(74, 108, 247, 0.35);
         }
 
-        .menu-btn.primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(231, 76, 60, 0.6);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(74, 108, 247, 0.45);
         }
 
-        .menu-btn.secondary {
-            background: linear-gradient(135deg, #4a6cf7 0%, #2541b2 100%);
-            box-shadow: 0 5px 20px rgba(74, 108, 247, 0.3);
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
         }
 
-        .menu-btn.secondary:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 25px rgba(74, 108, 247, 0.5);
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
-        .menu-btn.tertiary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: none;
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-color);
         }
 
-        .menu-btn.tertiary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.03);
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .menu-btn:active {
+        .btn:active {
             transform: scale(0.98) !important;
         }
 
-        .menu-stats {
-            margin-top: 25px;
-            display: flex;
-            gap: 30px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ffd700;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #8eb8ff;
-            margin-top: 3px;
+        .btn-icon {
+            font-size: 18px;
         }
 
         .menu-footer {
-            position: absolute;
-            bottom: 20px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.4);
+            margin-top: auto;
+            text-align: center;
         }
 
-        /* ============ LEADERBOARD SCREEN ============ */
+        .menu-footer-text {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .menu-footer-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        /* ============ LEADERBOARD ============ */
         .leaderboard-screen {
-            background: linear-gradient(180deg, rgba(10, 20, 60, 0.98) 0%, rgba(5, 10, 40, 0.99) 100%);
-            padding: 20px;
+            background: var(--bg-primary);
         }
 
         .screen-header {
             display: flex;
             align-items: center;
-            width: 100%;
-            margin-bottom: 15px;
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .back-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 50%;
+        .btn-back {
             width: 40px;
             height: 40px;
-            font-size: 20px;
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 18px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
 
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .btn-back:hover {
+            background: var(--bg-card-hover);
         }
 
         .screen-title {
             flex: 1;
             text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-right: 40px;
+        }
+
+        .tabs-container {
+            padding: 16px 20px;
         }
 
         .tabs {
             display: flex;
-            width: 100%;
-            background: rgba(0,0,0,0.3);
-            border-radius: 25px;
+            background: var(--bg-card);
+            border-radius: 12px;
             padding: 4px;
-            margin-bottom: 15px;
         }
 
         .tab {
             flex: 1;
-            padding: 10px 15px;
-            font-size: 14px;
-            color: #888;
+            padding: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
             background: transparent;
             border: none;
-            border-radius: 21px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .tab.active {
-            background: #4a6cf7;
-            color: white;
+            background: var(--accent-blue);
+            color: var(--text-primary);
         }
 
         .leaderboard-list {
-            width: 100%;
             flex: 1;
             overflow-y: auto;
-            padding: 5px;
+            padding: 0 20px 20px;
         }
 
-        .leaderboard-item {
+        .lb-item {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
-            margin: 6px 0;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .lb-item:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .lb-item.highlight {
+            background: rgba(74, 108, 247, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .lb-rank {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 10px;
+            margin-right: 14px;
+        }
+
+        .lb-rank.gold { background: linear-gradient(135deg, #f0b90b, #d4a00a); color: #000; }
+        .lb-rank.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); color: #000; }
+        .lb-rank.bronze { background: linear-gradient(135deg, #cd7f32, #b06c28); color: #fff; }
+        .lb-rank.default { background: var(--bg-secondary); color: var(--text-secondary); }
+
+        .lb-avatar {
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
-            transition: background 0.3s;
-        }
-
-        .leaderboard-item.me {
-            background: rgba(255, 215, 0, 0.15);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-
-        .leaderboard-rank {
-            font-size: 18px;
-            width: 35px;
-            text-align: center;
-        }
-
-        .leaderboard-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4a6cf7, #764ba2);
+            background: linear-gradient(135deg, var(--accent-blue), #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            margin-right: 12px;
+            font-weight: 700;
+            color: white;
+            margin-right: 14px;
         }
 
-        .leaderboard-info {
+        .lb-info {
             flex: 1;
+            min-width: 0;
         }
 
-        .leaderboard-name {
-            color: #fff;
+        .lb-name {
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .leaderboard-gifts {
-            color: #888;
-            font-size: 11px;
+        .lb-gifts {
+            font-size: 12px;
+            color: var(--text-tertiary);
             margin-top: 2px;
         }
 
-        .leaderboard-score {
+        .lb-score {
             font-size: 18px;
-            font-weight: bold;
-            color: #ffd700;
+            font-weight: 800;
+            color: var(--accent-gold);
         }
 
-        .leaderboard-loading {
-            color: #888;
+        .lb-empty {
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
         }
 
-        /* ============ SETTINGS SCREEN ============ */
+        /* ============ SETTINGS ============ */
         .settings-screen {
-            background: linear-gradient(180deg, rgba(10, 20, 60, 0.98) 0%, rgba(5, 10, 40, 0.99) 100%);
-            padding: 20px;
+            background: var(--bg-primary);
         }
 
-        .settings-list {
-            width: 100%;
-            margin-top: 10px;
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            padding-left: 4px;
         }
 
         .setting-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 18px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
             margin-bottom: 10px;
         }
 
-        .setting-info {
+        .setting-left {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
         }
 
         .setting-icon {
-            font-size: 24px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            font-size: 20px;
         }
 
         .setting-text h3 {
-            color: #fff;
-            font-size: 15px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
         }
 
         .setting-text p {
-            color: #888;
             font-size: 12px;
-            margin-top: 2px;
+            color: var(--text-tertiary);
         }
 
         .toggle {
-            width: 50px;
-            height: 28px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 14px;
+            width: 52px;
+            height: 30px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
             cursor: pointer;
             position: relative;
             transition: background 0.3s;
         }
 
         .toggle.active {
-            background: #4a6cf7;
+            background: var(--accent-blue);
         }
 
         .toggle::after {
             content: '';
             position: absolute;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             background: white;
             border-radius: 50%;
             top: 3px;
             left: 3px;
             transition: transform 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .toggle.active::after {
             transform: translateX(22px);
         }
 
-        .settings-section-title {
-            color: #888;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 20px 0 10px 5px;
-        }
-
-        .reset-btn {
+        .btn-danger {
             width: 100%;
-            padding: 15px;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            color: var(--accent-red);
+        }
+
+        .btn-danger:hover {
             background: rgba(231, 76, 60, 0.2);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            border-radius: 12px;
-            color: #e74c3c;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s;
         }
 
-        .reset-btn:hover {
-            background: rgba(231, 76, 60, 0.3);
-        }
-
-        /* ============ GAME OVER SCREEN ============ */
+        /* ============ GAME OVER ============ */
         .gameover-screen {
-            background: linear-gradient(180deg, rgba(10, 20, 60, 0.95) 0%, rgba(5, 10, 40, 0.98) 100%);
+            background: linear-gradient(180deg, rgba(10, 11, 20, 0.97) 0%, rgba(18, 19, 31, 0.98) 100%);
             justify-content: center;
+            align-items: center;
             padding: 30px;
         }
 
-        .gameover-title {
-            font-size: 36px;
-            margin-bottom: 20px;
+        .gameover-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
         }
 
         .gameover-score {
-            font-size: 64px;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            font-size: 72px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            text-shadow: 0 0 60px rgba(74, 108, 247, 0.4);
         }
 
         .gameover-label {
-            font-size: 14px;
-            color: #888;
-            margin-top: -5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 8px;
+        }
+
+        .new-record-badge {
+            display: none;
+            margin: 20px 0;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--accent-gold), #d4a00a);
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: recordPulse 1.5s ease-in-out infinite;
+        }
+
+        .new-record-badge.visible { display: block; }
+
+        @keyframes recordPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 0 30px 5px rgba(240, 185, 11, 0.2); }
         }
 
         .gameover-stats {
             display: flex;
-            gap: 40px;
-            margin: 25px 0;
+            gap: 24px;
+            margin: 28px 0;
         }
 
         .gameover-stat {
@@ -530,67 +728,30 @@
         }
 
         .gameover-stat-value {
-            font-size: 24px;
-            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         .gameover-stat-label {
             font-size: 11px;
-            color: #888;
-            margin-top: 3px;
-        }
-
-        .new-record {
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 15px 0;
-            animation: recordPulse 1s infinite;
-        }
-
-        @keyframes recordPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
         }
 
         .gameover-buttons {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             width: 100%;
-            max-width: 250px;
+            max-width: 260px;
             margin-top: 20px;
         }
 
-        .gameover-btn {
-            padding: 14px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .gameover-btn.primary {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-
-        .gameover-btn.secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .gameover-btn:hover {
-            transform: scale(1.03);
-        }
-
         /* ============ SNOWFLAKES ============ */
-        .snowflakes {
+        .snowflakes-container {
             position: absolute;
             top: 0;
             left: 0;
@@ -598,21 +759,21 @@
             height: 100%;
             pointer-events: none;
             overflow: hidden;
-            border-radius: 16px;
-            z-index: 15;
+            border-radius: 24px;
+            z-index: 5;
         }
 
         .snowflake {
             position: absolute;
             color: white;
-            font-size: 10px;
-            opacity: 0.6;
-            animation: fall linear infinite;
+            opacity: 0.4;
+            animation: snowfall linear infinite;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
 
-        @keyframes fall {
+        @keyframes snowfall {
             0% { transform: translateY(-10px) rotate(0deg); }
-            100% { transform: translateY(650px) rotate(360deg); }
+            100% { transform: translateY(660px) rotate(360deg); }
         }
     </style>
 </head>
@@ -620,327 +781,262 @@
     <div class="game-container">
         <canvas id="gameCanvas" width="360" height="640"></canvas>
         
-        <!-- HUD (во время игры) -->
+        <!-- HUD -->
         <div class="hud" id="hud">
-            <div class="score-display" id="scoreDisplay">0</div>
-            <div class="gift-counter" id="giftCounter">🎁 0</div>
-            <div class="shield-indicator" id="shieldIndicator">🛡️ НЕУЯЗВИМОСТЬ</div>
-            <div class="speed-indicator" id="speedIndicator">⚡ x1.0</div>
+            <div class="hud-top">
+                <div class="hud-stats">
+                    <div class="hud-stat gifts" id="hudGifts">🎁 0</div>
+                    <div class="hud-stat speed" id="hudSpeed">⚡ x1.0</div>
+                </div>
+                <div class="hud-score">
+                    <div class="hud-score-value" id="hudScore">0</div>
+                    <div class="hud-score-label">Счёт</div>
+                </div>
+                <div style="width: 60px;"></div>
+            </div>
+            <div class="shield-bar" id="shieldBar">
+                <span class="shield-bar-icon">🛡️</span>
+                <div class="shield-bar-progress">
+                    <div class="shield-bar-fill" id="shieldFill"></div>
+                </div>
+                <span class="shield-bar-text">ЗАЩИТА</span>
+            </div>
         </div>
 
-        <!-- Снежинки для меню -->
-        <div class="snowflakes" id="menuSnowflakes"></div>
+        <!-- Snowflakes -->
+        <div class="snowflakes-container" id="snowflakes"></div>
 
-        <!-- ============ ГЛАВНОЕ МЕНЮ ============ -->
+        <!-- MAIN MENU -->
         <div class="screen main-menu active" id="mainMenu">
-            <div class="logo-container">
-                <div class="logo-icon">🎅</div>
-                <div class="logo-title">SANTA FLIGHT</div>
-                <div class="logo-subtitle">AVIATION SERVICE</div>
-            </div>
-
-            <img src="player.png" class="player-preview" id="playerPreview" alt="Santa">
-
-            <div class="menu-buttons">
-                <button class="menu-btn primary" id="playBtn">
-                    <span>🚀</span> ИГРАТЬ
-                </button>
-                <button class="menu-btn secondary" id="leaderboardBtn">
-                    <span>🏆</span> Лидерборд
-                </button>
-                <button class="menu-btn tertiary" id="settingsBtn">
-                    <span>⚙️</span> Настройки
-                </button>
-            </div>
-
-            <div class="menu-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="menuBestScore">0</div>
-                    <div class="stat-label">ЛУЧШИЙ</div>
+            <div class="menu-bg-pattern"></div>
+            <div class="menu-content">
+                <div class="logo-section">
+                    <div class="logo-badge">🎄 Новогодняя игра</div>
+                    <div class="logo-icon">✈️</div>
+                    <div class="logo-title">Santa Flight</div>
+                    <div class="logo-subtitle">Aviation Service</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="menuTotalGifts">0</div>
-                    <div class="stat-label">ПОДАРКОВ</div>
+
+                <div class="player-preview-container">
+                    <img src="player.png" class="player-preview" alt="Santa">
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="menuGamesPlayed">0</div>
-                    <div class="stat-label">ИГР</div>
+
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value gold" id="statBest">0</div>
+                        <div class="stat-label">Рекорд</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statGifts">0</div>
+                        <div class="stat-label">Подарков</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statGames">0</div>
+                        <div class="stat-label">Игр</div>
+                    </div>
+                </div>
+
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" id="btnPlay">
+                        <span class="btn-icon">🚀</span> Начать полёт
+                    </button>
+                    <button class="btn btn-secondary" id="btnLeaderboard">
+                        <span class="btn-icon">🏆</span> Лидерборд
+                    </button>
+                    <button class="btn btn-ghost" id="btnSettings">
+                        <span class="btn-icon">⚙️</span> Настройки
+                    </button>
+                </div>
+
+                <div class="menu-footer">
+                    <p class="menu-footer-text">
+                        <a href="https://jet-avia.ru" target="_blank" class="menu-footer-link">jet-avia.ru</a> • v2.0
+                    </p>
                 </div>
             </div>
-
-            <div class="menu-footer">v1.0 • Made with ❤️</div>
         </div>
 
-        <!-- ============ ЛИДЕРБОРД ============ -->
+        <!-- LEADERBOARD -->
         <div class="screen leaderboard-screen" id="leaderboardScreen">
             <div class="screen-header">
-                <button class="back-btn" id="leaderboardBack">←</button>
-                <div class="screen-title">🏆 Лидерборд</div>
+                <button class="btn-back" id="lbBack">←</button>
+                <div class="screen-title">Лидерборд</div>
             </div>
-
-            <div class="tabs">
-                <button class="tab active" id="tabGlobal">🌐 Мировой</button>
-                <button class="tab" id="tabLocal">📱 Мой</button>
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab active" id="tabGlobal">🌐 Мировой</button>
+                    <button class="tab" id="tabLocal">📱 Локальный</button>
+                </div>
             </div>
-
-            <div class="leaderboard-list" id="leaderboardList">
-                <div class="leaderboard-loading">Загрузка...</div>
+            <div class="leaderboard-list" id="lbList">
+                <div class="lb-empty">Загрузка...</div>
             </div>
         </div>
 
-        <!-- ============ НАСТРОЙКИ ============ -->
+        <!-- SETTINGS -->
         <div class="screen settings-screen" id="settingsScreen">
             <div class="screen-header">
-                <button class="back-btn" id="settingsBack">←</button>
-                <div class="screen-title">⚙️ Настройки</div>
+                <button class="btn-back" id="settingsBack">←</button>
+                <div class="screen-title">Настройки</div>
             </div>
-
-            <div class="settings-list">
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-icon">🔊</span>
-                        <div class="setting-text">
-                            <h3>Звуки</h3>
-                            <p>Звуковые эффекты</p>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <div class="settings-section-title">Звук и вибрация</div>
+                    <div class="setting-item">
+                        <div class="setting-left">
+                            <div class="setting-icon">🔊</div>
+                            <div class="setting-text">
+                                <h3>Звуковые эффекты</h3>
+                                <p>Звуки в игре</p>
+                            </div>
                         </div>
+                        <div class="toggle active" id="toggleSound"></div>
                     </div>
-                    <div class="toggle active" id="soundToggle"></div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <span class="setting-icon">📳</span>
-                        <div class="setting-text">
-                            <h3>Вибрация</h3>
-                            <p>Тактильный отклик</p>
+                    <div class="setting-item">
+                        <div class="setting-left">
+                            <div class="setting-icon">📳</div>
+                            <div class="setting-text">
+                                <h3>Вибрация</h3>
+                                <p>Тактильный отклик</p>
+                            </div>
                         </div>
+                        <div class="toggle active" id="toggleVibration"></div>
                     </div>
-                    <div class="toggle active" id="vibrationToggle"></div>
                 </div>
-
-                <div class="settings-section-title">Данные</div>
-
-                <button class="reset-btn" id="resetBtn">🗑️ Сбросить прогресс</button>
+                <div class="settings-section">
+                    <div class="settings-section-title">Данные</div>
+                    <button class="btn btn-danger" id="btnReset">🗑️ Сбросить прогресс</button>
+                </div>
             </div>
         </div>
 
-        <!-- ============ GAME OVER ============ -->
+        <!-- GAME OVER -->
         <div class="screen gameover-screen" id="gameoverScreen">
-            <div class="gameover-title">💥</div>
-            <div class="gameover-score" id="finalScore">0</div>
-            <div class="gameover-label">ОЧКОВ</div>
-
-            <div class="new-record" id="newRecord" style="display: none;">🎉 НОВЫЙ РЕКОРД!</div>
+            <div class="gameover-icon">💥</div>
+            <div class="gameover-score" id="goScore">0</div>
+            <div class="gameover-label">Очков набрано</div>
+            
+            <div class="new-record-badge" id="newRecordBadge">🎉 Новый рекорд!</div>
 
             <div class="gameover-stats">
                 <div class="gameover-stat">
-                    <div class="gameover-stat-value" id="finalGifts">0</div>
-                    <div class="gameover-stat-label">🎁 ПОДАРКОВ</div>
+                    <div class="gameover-stat-value" id="goGifts">0</div>
+                    <div class="gameover-stat-label">🎁 Подарков</div>
                 </div>
                 <div class="gameover-stat">
-                    <div class="gameover-stat-value" id="finalBest">0</div>
-                    <div class="gameover-stat-label">🏆 ЛУЧШИЙ</div>
+                    <div class="gameover-stat-value" id="goBest">0</div>
+                    <div class="gameover-stat-label">🏆 Лучший</div>
                 </div>
             </div>
 
             <div class="gameover-buttons">
-                <button class="gameover-btn primary" id="retryBtn">🔄 Ещё раз</button>
-                <button class="gameover-btn secondary" id="menuBtn">🏠 В меню</button>
+                <button class="btn btn-primary" id="btnRetry">🔄 Ещё раз</button>
+                <button class="btn btn-secondary" id="btnHome">🏠 В меню</button>
             </div>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // SUPABASE CONFIG
+        // CONFIG
         // ==========================================
         const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
         const SUPABASE_KEY = 'YOUR_ANON_KEY';
 
-        // ==========================================
-        // GAME CONFIG
-        // ==========================================
         const CONFIG = {
             CANVAS_WIDTH: 360,
             CANVAS_HEIGHT: 640,
-
-            PLAYER: {
-                SIZE: 40,
-                X_POSITION: 80,
-                JUMP_FORCE: -7.5,
-                GRAVITY: 0.35,
-                MAX_VELOCITY: 10
-            },
-
-            PIPES: {
-                WIDTH: 55,
-                GAP: 190,
-                BASE_SPEED: 3,
-                SPAWN_RATE: 110,
-                MIN_HEIGHT: 80
-            },
-
-            GIFTS: {
-                SIZE: 35,
-                SPAWN_CHANCE: 0.4,
-                POINTS: 5,
-                SHIELD_DURATION: 180
-            },
-
-            DIFFICULTY: {
-                SPEED_INCREASE: 0.0005,
-                MAX_SPEED_MULTIPLIER: 2.0,
-                GAP_DECREASE: 0.05,
-                MIN_GAP: 140
-            }
+            PLAYER: { SIZE: 40, X: 80, JUMP: -7.5, GRAVITY: 0.35, MAX_V: 10 },
+            PIPES: { WIDTH: 55, GAP: 190, SPEED: 3, SPAWN: 110, MIN_H: 80 },
+            GIFTS: { SIZE: 35, CHANCE: 0.4, POINTS: 5, SHIELD: 180 },
+            DIFFICULTY: { SPEED_INC: 0.0005, MAX_SPEED: 2.0, GAP_DEC: 0.0005, MIN_GAP: 140 },
+            COLORS: { PIPE: '#1a2a4a', PIPE_LIGHT: '#3a5a8a', PIPE_CAP: '#4a7ccc' }
         };
 
         // ==========================================
-        // GAME STATE
+        // STATE
         // ==========================================
         let gameState = 'menu';
-        let currentScreen = 'mainMenu';
-        let score = 0;
-        let giftsCollected = 0;
-        let frameCount = 0;
-        let speedMultiplier = 1.0;
-        let currentGap = CONFIG.PIPES.GAP;
-        let shieldActive = false;
-        let shieldTimer = 0;
+        let score = 0, gifts = 0, frameCount = 0;
+        let speedMult = 1.0, currentGap = CONFIG.PIPES.GAP;
+        let shieldActive = false, shieldTimer = 0;
 
-        // Stats
-        let stats = JSON.parse(localStorage.getItem('santaStats')) || {
-            bestScore: 0,
-            totalGifts: 0,
-            gamesPlayed: 0
-        };
+        let stats = JSON.parse(localStorage.getItem('avsStats')) || { best: 0, gifts: 0, games: 0 };
+        let settings = JSON.parse(localStorage.getItem('avsSettings')) || { sound: true, vibration: true };
 
-        // Settings
-        let settings = JSON.parse(localStorage.getItem('santaSettings')) || {
-            sound: true,
-            vibration: true
-        };
-
-        // Player
-        let player = {
-            x: CONFIG.PLAYER.X_POSITION,
-            y: CONFIG.CANVAS_HEIGHT / 2,
-            velocity: 0,
-            rotation: 0
-        };
-
-        // Game objects
-        let pipes = [];
-        let gifts = [];
-        let particles = [];
-        let snowflakes = [];
-        let trails = [];
-        let sparkles = [];
-        let giftParticles = [];
-        let shieldParticles = [];
+        let player = { x: CONFIG.PLAYER.X, y: CONFIG.CANVAS_HEIGHT / 2, v: 0, rot: 0 };
+        let pipes = [], giftsArr = [], particles = [], snowflakes = [], trails = [];
 
         // ==========================================
-        // CANVAS & IMAGES
+        // CANVAS & ASSETS
         // ==========================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const backgroundImage = new Image();
-        backgroundImage.src = 'background.png';
-
-        const playerImage = new Image();
-        playerImage.src = 'player.png';
+        const bgImg = new Image();
+        bgImg.src = 'background.png';
+        const playerImg = new Image();
+        playerImg.src = 'player.png';
 
         // ==========================================
         // TELEGRAM
         // ==========================================
         let tg = window.Telegram?.WebApp;
-        let playerName = 'Игрок';
-        let oderId = null;
-
+        let playerName = 'Пилот';
         if (tg) {
             tg.ready();
             tg.expand();
-            if (tg.initDataUnsafe?.user) {
-                playerName = tg.initDataUnsafe.user.first_name || 'Игрок';
-                oderId = tg.initDataUnsafe.user.id?.toString();
-            }
+            if (tg.initDataUnsafe?.user?.first_name) playerName = tg.initDataUnsafe.user.first_name;
         }
 
         // ==========================================
-        // SOUND MANAGER
+        // SOUND
         // ==========================================
-        class SoundManager {
-            constructor() {
-                this.audioContext = null;
-                this.initialized = false;
-            }
-
+        class Sound {
+            constructor() { this.ctx = null; }
             init() {
-                if (this.initialized) return;
-                try {
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    this.initialized = true;
-                } catch (e) {}
+                if (this.ctx) return;
+                try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
             }
-
             play(type) {
-                if (!settings.sound || !this.audioContext) return;
-                
-                const ctx = this.audioContext;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
+                if (!settings.sound || !this.ctx) return;
+                const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+                o.connect(g); g.connect(c.destination);
+                const now = c.currentTime;
                 switch(type) {
                     case 'jump':
-                        osc.frequency.setValueAtTime(400, ctx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
-                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.1);
+                        o.frequency.setValueAtTime(400, now);
+                        o.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                        g.gain.setValueAtTime(0.15, now);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                        o.start(now); o.stop(now + 0.1);
                         break;
                     case 'score':
-                        osc.frequency.setValueAtTime(523, ctx.currentTime);
-                        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-                        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.2);
+                        o.frequency.setValueAtTime(523, now);
+                        o.frequency.setValueAtTime(659, now + 0.1);
+                        g.gain.setValueAtTime(0.15, now);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        o.start(now); o.stop(now + 0.2);
                         break;
                     case 'gift':
-                        osc.frequency.setValueAtTime(800, ctx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
-                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.3);
-                        break;
-                    case 'shield':
-                        osc.frequency.setValueAtTime(600, ctx.currentTime);
-                        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.1);
-                        osc.frequency.setValueAtTime(1000, ctx.currentTime + 0.2);
-                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.4);
+                        o.frequency.setValueAtTime(800, now);
+                        o.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+                        g.gain.setValueAtTime(0.2, now);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        o.start(now); o.stop(now + 0.3);
                         break;
                     case 'crash':
-                        osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(200, ctx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
-                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-                        osc.start(ctx.currentTime);
-                        osc.stop(ctx.currentTime + 0.5);
+                        o.type = 'sawtooth';
+                        o.frequency.setValueAtTime(200, now);
+                        o.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+                        g.gain.setValueAtTime(0.2, now);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                        o.start(now); o.stop(now + 0.4);
                         break;
                 }
             }
         }
-
-        const sound = new SoundManager();
+        const sound = new Sound();
 
         // ==========================================
         // LEADERBOARD
@@ -948,275 +1044,176 @@
         class Leaderboard {
             constructor() {
                 this.enabled = SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co';
-                this.cache = [];
-                this.lastFetch = 0;
+                this.cache = []; this.lastFetch = 0;
             }
-
-            async fetchScores() {
-                if (!this.enabled) return this.getLocalScores();
-
-                if (Date.now() - this.lastFetch < 30000 && this.cache.length > 0) {
-                    return this.cache;
-                }
-
+            async fetch() {
+                if (!this.enabled) return this.local();
+                if (Date.now() - this.lastFetch < 30000 && this.cache.length) return this.cache;
                 try {
-                    const res = await fetch(
-                        `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=10`,
-                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-                    );
-                    if (res.ok) {
-                        this.cache = await res.json();
-                        this.lastFetch = Date.now();
-                        return this.cache;
-                    }
-                } catch (e) {}
-                return this.getLocalScores();
+                    const r = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=10`,
+                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+                    if (r.ok) { this.cache = await r.json(); this.lastFetch = Date.now(); return this.cache; }
+                } catch(e) {}
+                return this.local();
             }
-
-            async submitScore(name, score, gifts, oderId) {
-                this.saveLocalScore(name, score, gifts);
+            async submit(name, score, gifts) {
+                this.saveLocal(name, score, gifts);
                 if (!this.enabled) return;
                 try {
                     await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
                         method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json',
-                            'Prefer': 'return=minimal'
-                        },
-                        body: JSON.stringify({
-                            player_name: name.substring(0, 50),
-                            score, gifts,
-                            user_id: oderId || null
-                        })
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ player_name: name.substring(0, 50), score, gifts })
                     });
                     this.lastFetch = 0;
-                } catch (e) {}
+                } catch(e) {}
             }
-
-            getLocalScores() {
-                return JSON.parse(localStorage.getItem('leaderboard')) || [];
+            local() { return JSON.parse(localStorage.getItem('avsLB')) || []; }
+            saveLocal(name, score, gifts) {
+                const s = this.local();
+                s.push({ player_name: name, score, gifts });
+                s.sort((a, b) => b.score - a.score);
+                localStorage.setItem('avsLB', JSON.stringify(s.slice(0, 20)));
             }
-
-            saveLocalScore(name, score, gifts) {
-                const scores = this.getLocalScores();
-                scores.push({ player_name: name, score, gifts, date: Date.now() });
-                scores.sort((a, b) => b.score - a.score);
-                localStorage.setItem('leaderboard', JSON.stringify(scores.slice(0, 20)));
-            }
-
-            async render(containerId) {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-
-                container.innerHTML = '<div class="leaderboard-loading">Загрузка...</div>';
-
-                const scores = await this.fetchScores();
-
-                if (scores.length === 0) {
-                    container.innerHTML = '<div class="leaderboard-loading">Пока нет результатов</div>';
-                    return;
-                }
-
-                const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7', '8', '9', '10'];
-                container.innerHTML = scores.slice(0, 10).map((entry, i) => {
-                    const name = entry.player_name || 'Игрок';
-                    const initial = name.charAt(0).toUpperCase();
-                    const isMe = name === playerName;
-                    return `
-                        <div class="leaderboard-item ${isMe ? 'me' : ''}">
-                            <span class="leaderboard-rank">${medals[i]}</span>
-                            <div class="leaderboard-avatar">${initial}</div>
-                            <div class="leaderboard-info">
-                                <div class="leaderboard-name">${name}</div>
-                                <div class="leaderboard-gifts">🎁 ${entry.gifts || 0}</div>
-                            </div>
-                            <div class="leaderboard-score">${entry.score}</div>
-                        </div>
-                    `;
+            async render(el, local = false) {
+                const c = document.getElementById(el);
+                c.innerHTML = '<div class="lb-empty">Загрузка...</div>';
+                const data = local ? this.local() : await this.fetch();
+                if (!data.length) { c.innerHTML = '<div class="lb-empty">Пока нет результатов</div>'; return; }
+                c.innerHTML = data.slice(0, 10).map((e, i) => {
+                    const name = e.player_name || 'Пилот';
+                    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'default';
+                    return `<div class="lb-item ${name === playerName ? 'highlight' : ''}">
+                        <div class="lb-rank ${rankClass}">${i + 1}</div>
+                        <div class="lb-avatar">${name[0].toUpperCase()}</div>
+                        <div class="lb-info"><div class="lb-name">${name}</div><div class="lb-gifts">🎁 ${e.gifts || 0}</div></div>
+                        <div class="lb-score">${e.score}</div>
+                    </div>`;
                 }).join('');
             }
         }
-
-        const leaderboard = new Leaderboard();
+        const lb = new Leaderboard();
 
         // ==========================================
-        // UI FUNCTIONS
+        // UI
         // ==========================================
-        function showScreen(screenId) {
+        const $ = id => document.getElementById(id);
+
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            currentScreen = screenId;
-
-            // Show/hide menu snowflakes
-            document.getElementById('menuSnowflakes').style.display = 
-                (screenId === 'mainMenu' || screenId === 'leaderboardScreen' || screenId === 'settingsScreen') 
-                ? 'block' : 'none';
+            if (id) $(id).classList.add('active');
+            $('snowflakes').style.display = id && id !== 'gameoverScreen' ? 'block' : 'block';
         }
 
-        function updateMenuStats() {
-            document.getElementById('menuBestScore').textContent = stats.bestScore;
-            document.getElementById('menuTotalGifts').textContent = stats.totalGifts;
-            document.getElementById('menuGamesPlayed').textContent = stats.gamesPlayed;
+        function updateStats() {
+            $('statBest').textContent = stats.best;
+            $('statGifts').textContent = stats.gifts;
+            $('statGames').textContent = stats.games;
         }
 
-        function updateSettingsUI() {
-            document.getElementById('soundToggle').classList.toggle('active', settings.sound);
-            document.getElementById('vibrationToggle').classList.toggle('active', settings.vibration);
+        function updateToggles() {
+            $('toggleSound').classList.toggle('active', settings.sound);
+            $('toggleVibration').classList.toggle('active', settings.vibration);
         }
 
-        function saveStats() {
-            localStorage.setItem('santaStats', JSON.stringify(stats));
-        }
-
-        function saveSettings() {
-            localStorage.setItem('santaSettings', JSON.stringify(settings));
-        }
-
-        function createMenuSnowflakes() {
-            const container = document.getElementById('menuSnowflakes');
-            for (let i = 0; i < 30; i++) {
-                const flake = document.createElement('div');
-                flake.className = 'snowflake';
-                flake.textContent = '❄';
-                flake.style.left = Math.random() * 100 + '%';
-                flake.style.animationDuration = (Math.random() * 5 + 5) + 's';
-                flake.style.animationDelay = Math.random() * 5 + 's';
-                flake.style.opacity = Math.random() * 0.5 + 0.3;
-                flake.style.fontSize = (Math.random() * 10 + 8) + 'px';
-                container.appendChild(flake);
+        function createSnowflakes() {
+            const c = $('snowflakes');
+            c.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const s = document.createElement('div');
+                s.className = 'snowflake';
+                s.textContent = '❄';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.fontSize = (Math.random() * 12 + 8) + 'px';
+                s.style.animationDuration = (Math.random() * 6 + 6) + 's';
+                s.style.animationDelay = Math.random() * 6 + 's';
+                c.appendChild(s);
             }
         }
 
-        function vibrate(pattern) {
-            if (settings.vibration && navigator.vibrate) {
-                navigator.vibrate(pattern);
-            }
-            if (settings.vibration && tg?.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
+        function vibrate(p) {
+            if (settings.vibration && navigator.vibrate) navigator.vibrate(p);
         }
 
         // ==========================================
-        // GAME FUNCTIONS
+        // GAME
         // ==========================================
-        function initSnowflakes() {
+        function initSnow() {
             snowflakes = [];
-            for (let i = 0; i < 50; i++) {
-                snowflakes.push({
-                    x: Math.random() * CONFIG.CANVAS_WIDTH,
-                    y: Math.random() * CONFIG.CANVAS_HEIGHT,
-                    size: Math.random() * 3 + 1,
-                    speed: Math.random() * 1 + 0.5,
-                    opacity: Math.random() * 0.5 + 0.3
-                });
+            for (let i = 0; i < 40; i++) {
+                snowflakes.push({ x: Math.random() * 360, y: Math.random() * 640, sz: Math.random() * 3 + 1, sp: Math.random() * 1 + 0.5, op: Math.random() * 0.4 + 0.2 });
             }
         }
 
-        function resetGame() {
-            player = {
-                x: CONFIG.PLAYER.X_POSITION,
-                y: CONFIG.CANVAS_HEIGHT / 2,
-                velocity: 0,
-                rotation: 0
-            };
-            pipes = [];
-            gifts = [];
-            particles = [];
-            trails = [];
-            sparkles = [];
-            giftParticles = [];
-            shieldParticles = [];
-            score = 0;
-            giftsCollected = 0;
-            frameCount = 0;
-            speedMultiplier = 1.0;
-            currentGap = CONFIG.PIPES.GAP;
-            shieldActive = false;
-            shieldTimer = 0;
-
-            document.getElementById('scoreDisplay').textContent = '0';
-            document.getElementById('giftCounter').textContent = '🎁 0';
-            document.getElementById('speedIndicator').textContent = '⚡ x1.0';
-            document.getElementById('shieldIndicator').classList.remove('active');
+        function reset() {
+            player = { x: CONFIG.PLAYER.X, y: 320, v: 0, rot: 0 };
+            pipes = []; giftsArr = []; particles = []; trails = [];
+            score = 0; gifts = 0; frameCount = 0;
+            speedMult = 1.0; currentGap = CONFIG.PIPES.GAP;
+            shieldActive = false; shieldTimer = 0;
+            $('hudScore').textContent = '0';
+            $('hudGifts').textContent = '🎁 0';
+            $('hudSpeed').textContent = '⚡ x1.0';
+            $('shieldBar').classList.remove('active');
         }
 
-        function startGame() {
+        function start() {
             sound.init();
-            resetGame();
+            reset();
             gameState = 'playing';
-            showScreen('none');
-            document.getElementById('hud').classList.add('visible');
-            document.getElementById('menuSnowflakes').style.display = 'none';
+            showScreen(null);
+            $('hud').classList.add('visible');
         }
 
         function gameOver() {
-            gameState = 'gameover';
+            gameState = 'over';
             sound.play('crash');
             vibrate([100, 50, 100]);
 
-            // Update stats
-            stats.gamesPlayed++;
-            stats.totalGifts += giftsCollected;
-            
-            const isNewRecord = score > stats.bestScore;
-            if (isNewRecord) {
-                stats.bestScore = score;
-            }
-            saveStats();
+            stats.games++;
+            stats.gifts += gifts;
+            const isRecord = score > stats.best;
+            if (isRecord) stats.best = score;
+            localStorage.setItem('avsStats', JSON.stringify(stats));
 
-            // Submit score
-            leaderboard.submitScore(playerName, score, giftsCollected, oderId);
+            lb.submit(playerName, score, gifts);
 
-            // Show game over screen
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('finalGifts').textContent = giftsCollected;
-            document.getElementById('finalBest').textContent = stats.bestScore;
-            document.getElementById('newRecord').style.display = isNewRecord ? 'block' : 'none';
+            $('goScore').textContent = score;
+            $('goGifts').textContent = gifts;
+            $('goBest').textContent = stats.best;
+            $('newRecordBadge').classList.toggle('visible', isRecord);
 
-            document.getElementById('hud').classList.remove('visible');
+            $('hud').classList.remove('visible');
             showScreen('gameoverScreen');
-
-            createExplosion(player.x, player.y);
+            explosion(player.x, player.y);
         }
 
         function jump() {
-            if (gameState === 'playing') {
-                player.velocity = CONFIG.PLAYER.JUMP_FORCE;
-                sound.play('jump');
-                vibrate(30);
-            }
+            if (gameState !== 'playing') return;
+            player.v = CONFIG.PLAYER.JUMP;
+            sound.play('jump');
+            vibrate(25);
         }
 
         // ==========================================
-        // DRAWING FUNCTIONS
+        // DRAW
         // ==========================================
-        function drawBackground() {
-            if (backgroundImage.complete) {
-                ctx.drawImage(backgroundImage, 0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-            } else {
-                const grad = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
-                grad.addColorStop(0, '#3939c1');
-                grad.addColorStop(1, '#2929a1');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-            }
+        function drawBg() {
+            if (bgImg.complete) ctx.drawImage(bgImg, 0, 0, 360, 640);
+            else { ctx.fillStyle = '#0a0b14'; ctx.fillRect(0, 0, 360, 640); }
         }
 
-        function drawSnowflakes() {
-            ctx.fillStyle = 'white';
+        function drawSnow() {
             snowflakes.forEach(s => {
-                ctx.globalAlpha = s.opacity;
+                ctx.globalAlpha = s.op;
+                ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.arc(s.x, s.y, s.sz, 0, Math.PI * 2);
                 ctx.fill();
-                s.y += s.speed * speedMultiplier;
+                s.y += s.sp * speedMult;
                 s.x += Math.sin(frameCount * 0.01 + s.x) * 0.3;
-                if (s.y > CONFIG.CANVAS_HEIGHT) {
-                    s.y = -5;
-                    s.x = Math.random() * CONFIG.CANVAS_WIDTH;
-                }
+                if (s.y > 640) { s.y = -5; s.x = Math.random() * 360; }
             });
             ctx.globalAlpha = 1;
         }
@@ -1224,258 +1221,229 @@
         function drawPlayer() {
             ctx.save();
             ctx.translate(player.x, player.y);
-            ctx.rotate(player.rotation);
-            
+            ctx.rotate(player.rot);
             const bob = Math.sin(frameCount * 0.15) * 3;
-            ctx.rotate(Math.sin(frameCount * 0.08) * 0.05);
 
             if (shieldActive) {
-                ctx.shadowColor = '#00ffff';
+                ctx.shadowColor = '#00d4ff';
                 ctx.shadowBlur = 30 + Math.sin(frameCount * 0.2) * 10;
-                ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 + Math.sin(frameCount * 0.1) * 0.3})`;
+                ctx.strokeStyle = `rgba(0, 212, 255, ${0.4 + Math.sin(frameCount * 0.1) * 0.2})`;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(0, bob, 50, 0, Math.PI * 2);
+                ctx.arc(0, bob, 48, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
-            if (playerImage.complete) {
-                ctx.drawImage(playerImage, -40, -32.5 + bob, 80, 65);
-            }
-
+            if (playerImg.complete) ctx.drawImage(playerImg, -40, -32 + bob, 80, 64);
             ctx.shadowBlur = 0;
             ctx.restore();
 
-            // Trail particles
             if (gameState === 'playing' && frameCount % 3 === 0) {
-                trails.push({
-                    x: player.x - 35,
-                    y: player.y + 10 + Math.random() * 10,
-                    size: Math.random() * 4 + 2,
-                    alpha: 0.8,
-                    color: shieldActive ? '0, 255, 255' : (Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100')
-                });
+                trails.push({ x: player.x - 35, y: player.y + 10 + Math.random() * 8, sz: Math.random() * 4 + 2, a: 0.7, c: shieldActive ? '0,212,255' : '255,180,50' });
             }
         }
 
         function drawTrails() {
-            const speed = CONFIG.PIPES.BASE_SPEED * speedMultiplier;
+            const sp = CONFIG.PIPES.SPEED * speedMult;
             trails.forEach((t, i) => {
-                ctx.fillStyle = `rgba(${t.color}, ${t.alpha})`;
+                ctx.fillStyle = `rgba(${t.c},${t.a})`;
                 ctx.beginPath();
-                ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+                ctx.arc(t.x, t.y, t.sz, 0, Math.PI * 2);
                 ctx.fill();
-                t.x -= speed * 0.8;
-                t.alpha -= 0.02;
-                t.size *= 0.97;
-                if (t.alpha <= 0 || t.x < -10) trails.splice(i, 1);
+                t.x -= sp * 0.8;
+                t.a -= 0.02;
+                t.sz *= 0.96;
+                if (t.a <= 0 || t.x < -10) trails.splice(i, 1);
             });
         }
 
         function drawPipes() {
-            pipes.forEach(pipe => {
-                const grad = ctx.createLinearGradient(pipe.x, 0, pipe.x + CONFIG.PIPES.WIDTH, 0);
-                grad.addColorStop(0, '#1e3a6e');
-                grad.addColorStop(0.5, '#6a9cec');
-                grad.addColorStop(1, '#1e3a6e');
-                
+            pipes.forEach(p => {
+                const grad = ctx.createLinearGradient(p.x, 0, p.x + CONFIG.PIPES.WIDTH, 0);
+                grad.addColorStop(0, CONFIG.COLORS.PIPE);
+                grad.addColorStop(0.5, CONFIG.COLORS.PIPE_LIGHT);
+                grad.addColorStop(1, CONFIG.COLORS.PIPE);
+
                 ctx.fillStyle = grad;
-                ctx.fillRect(pipe.x, 0, CONFIG.PIPES.WIDTH, pipe.topHeight);
-                ctx.fillRect(pipe.x, pipe.bottomY, CONFIG.PIPES.WIDTH, CONFIG.CANVAS_HEIGHT - pipe.bottomY);
-                
-                ctx.fillStyle = '#4a7ccc';
-                ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, CONFIG.PIPES.WIDTH + 10, 25);
-                ctx.fillRect(pipe.x - 5, pipe.bottomY, CONFIG.PIPES.WIDTH + 10, 25);
+                ctx.fillRect(p.x, 0, CONFIG.PIPES.WIDTH, p.top);
+                ctx.fillRect(p.x, p.bot, CONFIG.PIPES.WIDTH, 640 - p.bot);
+
+                ctx.fillStyle = CONFIG.COLORS.PIPE_CAP;
+                ctx.fillRect(p.x - 4, p.top - 20, CONFIG.PIPES.WIDTH + 8, 20);
+                ctx.fillRect(p.x - 4, p.bot, CONFIG.PIPES.WIDTH + 8, 20);
+
+                // Warning lights
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(p.x + CONFIG.PIPES.WIDTH / 2, p.top - 20, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(p.x + CONFIG.PIPES.WIDTH / 2, p.bot + 20, 4, 0, Math.PI * 2);
+                ctx.fill();
             });
         }
 
         function drawGifts() {
-            gifts.forEach(g => {
+            giftsArr.forEach(g => {
                 ctx.save();
                 ctx.translate(g.x, g.y);
-                const wobble = Math.sin(frameCount * 0.1 + g.x) * 5;
-                ctx.rotate(Math.sin(frameCount * 0.05) * 0.1);
-                
-                ctx.shadowColor = '#ffd700';
+                const wb = Math.sin(frameCount * 0.1 + g.x) * 4;
+                ctx.rotate(Math.sin(frameCount * 0.05) * 0.08);
+
+                ctx.shadowColor = '#f0b90b';
                 ctx.shadowBlur = 15 + Math.sin(frameCount * 0.1) * 5;
-                
+
                 const s = CONFIG.GIFTS.SIZE;
                 ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(-s/2, -s/2 + wobble, s, s);
-                
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(-4, -s/2 + wobble, 8, s);
-                ctx.fillRect(-s/2, -4 + wobble, s, 8);
-                
+                ctx.fillRect(-s/2, -s/2 + wb, s, s);
+
+                ctx.fillStyle = '#f0b90b';
+                ctx.fillRect(-3, -s/2 + wb, 6, s);
+                ctx.fillRect(-s/2, -3 + wb, s, 6);
+
                 ctx.beginPath();
-                ctx.ellipse(-8, -s/2 - 5 + wobble, 8, 6, -0.3, 0, Math.PI * 2);
+                ctx.ellipse(-7, -s/2 - 4 + wb, 7, 5, -0.3, 0, Math.PI * 2);
+                ctx.ellipse(7, -s/2 - 4 + wb, 7, 5, 0.3, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(8, -s/2 - 5 + wobble, 8, 6, 0.3, 0, Math.PI * 2);
-                ctx.fill();
-                
+
                 ctx.shadowBlur = 0;
                 ctx.restore();
             });
         }
 
         function drawParticles() {
-            [...particles, ...giftParticles, ...shieldParticles].forEach((p, i, arr) => {
-                ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+            particles.forEach((p, i) => {
+                ctx.fillStyle = `rgba(${p.c},${p.a})`;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.sz, 0, Math.PI * 2);
                 ctx.fill();
-                p.x += p.vx || 0;
-                p.y += p.vy || 0;
-                if (p.vy !== undefined) p.vy += 0.1;
-                p.alpha -= 0.02;
-                p.size *= 0.98;
-                if (p.alpha <= 0) arr.splice(i, 1);
+                p.x += p.vx; p.y += p.vy;
+                if (p.g) p.vy += 0.15;
+                p.a -= 0.02;
+                p.sz *= 0.97;
+                if (p.a <= 0) particles.splice(i, 1);
             });
         }
 
-        function createExplosion(x, y) {
-            const colors = ['255, 100, 50', '255, 200, 50', '255, 150, 0'];
+        function explosion(x, y) {
+            const colors = ['255,100,50', '255,200,50', '255,150,0'];
             for (let i = 0; i < 25; i++) {
-                particles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
-                    size: Math.random() * 8 + 2,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    alpha: 1
-                });
+                particles.push({ x, y, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, sz: Math.random() * 7 + 2, c: colors[Math.floor(Math.random() * 3)], a: 1, g: false });
             }
         }
 
-        function createGiftExplosion(x, y) {
-            const colors = ['255, 215, 0', '0, 255, 255', '231, 76, 60'];
-            for (let i = 0; i < 20; i++) {
-                giftParticles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8 - 3,
-                    size: Math.random() * 6 + 3,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    alpha: 1
-                });
+        function giftExplosion(x, y) {
+            const colors = ['240,185,11', '0,212,255', '231,76,60'];
+            for (let i = 0; i < 18; i++) {
+                particles.push({ x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 2, sz: Math.random() * 5 + 2, c: colors[Math.floor(Math.random() * 3)], a: 1, g: true });
             }
         }
 
         // ==========================================
-        // UPDATE FUNCTIONS
+        // UPDATE
         // ==========================================
         function updatePlayer() {
-            player.velocity += CONFIG.PLAYER.GRAVITY;
-            player.velocity = Math.min(player.velocity, CONFIG.PLAYER.MAX_VELOCITY);
-            player.y += player.velocity;
-            player.rotation = Math.min(Math.max(player.velocity * 0.06, -0.4), 0.6);
+            player.v += CONFIG.PLAYER.GRAVITY;
+            player.v = Math.min(player.v, CONFIG.PLAYER.MAX_V);
+            player.y += player.v;
+            player.rot = Math.min(Math.max(player.v * 0.06, -0.4), 0.6);
 
-            if (player.y < 20) {
-                player.y = 20;
-                player.velocity = 0;
-            }
-            if (player.y > CONFIG.CANVAS_HEIGHT - 80) {
+            if (player.y < 25) { player.y = 25; player.v = 0; }
+            if (player.y > 580) {
                 if (!shieldActive) gameOver();
-                else {
-                    player.y = CONFIG.CANVAS_HEIGHT - 80;
-                    player.velocity = CONFIG.PLAYER.JUMP_FORCE;
-                }
+                else { player.y = 580; player.v = CONFIG.PLAYER.JUMP; }
             }
         }
 
         function updatePipes() {
-            const speed = CONFIG.PIPES.BASE_SPEED * speedMultiplier;
+            const sp = CONFIG.PIPES.SPEED * speedMult;
+            const spawnRate = Math.floor(CONFIG.PIPES.SPAWN / speedMult);
 
-            if (frameCount % Math.floor(CONFIG.PIPES.SPAWN_RATE / speedMultiplier) === 0) {
-                const minTop = CONFIG.PIPES.MIN_HEIGHT;
-                const maxTop = CONFIG.CANVAS_HEIGHT - currentGap - CONFIG.PIPES.MIN_HEIGHT - 80;
-                const topH = Math.random() * (maxTop - minTop) + minTop;
+            if (frameCount % spawnRate === 0) {
+                const minT = CONFIG.PIPES.MIN_H;
+                const maxT = 640 - currentGap - CONFIG.PIPES.MIN_H - 60;
+                const top = Math.random() * (maxT - minT) + minT;
+                pipes.push({ x: 360, top, bot: top + currentGap, passed: false });
 
-                pipes.push({ x: CONFIG.CANVAS_WIDTH, topHeight: topH, bottomY: topH + currentGap, passed: false });
-
-                if (Math.random() < CONFIG.GIFTS.SPAWN_CHANCE) {
-                    gifts.push({ x: CONFIG.CANVAS_WIDTH + 50, y: topH + currentGap / 2, collected: false });
+                if (Math.random() < CONFIG.GIFTS.CHANCE) {
+                    giftsArr.push({ x: 410, y: top + currentGap / 2, col: false });
                 }
             }
 
             pipes.forEach((p, i) => {
-                p.x -= speed;
+                p.x -= sp;
                 if (!p.passed && p.x + CONFIG.PIPES.WIDTH < player.x) {
                     p.passed = true;
                     score++;
-                    document.getElementById('scoreDisplay').textContent = score;
+                    $('hudScore').textContent = score;
                     sound.play('score');
-                    vibrate(30);
+                    vibrate(25);
                 }
-                if (checkCollision(p) && !shieldActive) gameOver();
-                if (p.x + CONFIG.PIPES.WIDTH < 0) pipes.splice(i, 1);
+                if (collision(p) && !shieldActive) gameOver();
+                if (p.x < -CONFIG.PIPES.WIDTH) pipes.splice(i, 1);
             });
         }
 
         function updateGifts() {
-            const speed = CONFIG.PIPES.BASE_SPEED * speedMultiplier;
-            gifts.forEach((g, i) => {
-                g.x -= speed;
-                if (!g.collected) {
+            const sp = CONFIG.PIPES.SPEED * speedMult;
+            giftsArr.forEach((g, i) => {
+                g.x -= sp;
+                if (!g.col) {
                     const dx = player.x - g.x, dy = player.y - g.y;
-                    if (Math.sqrt(dx*dx + dy*dy) < 45) {
-                        g.collected = true;
-                        giftsCollected++;
+                    if (Math.sqrt(dx*dx + dy*dy) < 42) {
+                        g.col = true;
+                        gifts++;
                         score += CONFIG.GIFTS.POINTS;
-                        document.getElementById('scoreDisplay').textContent = score;
-                        document.getElementById('giftCounter').textContent = `🎁 ${giftsCollected}`;
-                        createGiftExplosion(g.x, g.y);
+                        $('hudScore').textContent = score;
+                        $('hudGifts').textContent = '🎁 ' + gifts;
+                        giftExplosion(g.x, g.y);
                         activateShield();
-                        vibrate([50, 30, 50]);
+                        vibrate([40, 20, 40]);
                     }
                 }
-                if (g.x < -50 || g.collected) gifts.splice(i, 1);
+                if (g.x < -50 || g.col) giftsArr.splice(i, 1);
             });
         }
 
         function updateDifficulty() {
-            if (speedMultiplier < CONFIG.DIFFICULTY.MAX_SPEED_MULTIPLIER) {
-                speedMultiplier += CONFIG.DIFFICULTY.SPEED_INCREASE;
-            }
-            if (currentGap > CONFIG.DIFFICULTY.MIN_GAP) {
-                currentGap -= CONFIG.DIFFICULTY.GAP_DECREASE * 0.01;
-            }
-            document.getElementById('speedIndicator').textContent = `⚡ x${speedMultiplier.toFixed(1)}`;
+            if (speedMult < CONFIG.DIFFICULTY.MAX_SPEED) speedMult += CONFIG.DIFFICULTY.SPEED_INC;
+            if (currentGap > CONFIG.DIFFICULTY.MIN_GAP) currentGap -= CONFIG.DIFFICULTY.GAP_DEC;
+            $('hudSpeed').textContent = '⚡ x' + speedMult.toFixed(1);
         }
 
         function updateShield() {
             if (shieldActive) {
                 shieldTimer--;
+                $('shieldFill').style.width = (shieldTimer / CONFIG.GIFTS.SHIELD * 100) + '%';
                 if (shieldTimer <= 0) {
                     shieldActive = false;
-                    document.getElementById('shieldIndicator').classList.remove('active');
+                    $('shieldBar').classList.remove('active');
                 }
             }
         }
 
         function activateShield() {
             shieldActive = true;
-            shieldTimer = CONFIG.GIFTS.SHIELD_DURATION;
-            document.getElementById('shieldIndicator').classList.add('active');
-            sound.play('shield');
+            shieldTimer = CONFIG.GIFTS.SHIELD;
+            $('shieldBar').classList.add('active');
+            sound.play('gift');
         }
 
-        function checkCollision(pipe) {
-            const pl = player.x - 30, pr = player.x + 30;
-            const pt = player.y - 25, pb = player.y + 25;
-            if (pr > pipe.x && pl < pipe.x + CONFIG.PIPES.WIDTH) {
-                if (pt < pipe.topHeight || pb > pipe.bottomY) return true;
+        function collision(p) {
+            const pl = player.x - 28, pr = player.x + 28;
+            const pt = player.y - 22, pb = player.y + 22;
+            if (pr > p.x && pl < p.x + CONFIG.PIPES.WIDTH) {
+                if (pt < p.top || pb > p.bot) return true;
             }
             return false;
         }
 
         // ==========================================
-        // GAME LOOP
+        // LOOP
         // ==========================================
-        function gameLoop() {
-            drawBackground();
-            drawSnowflakes();
+        function loop() {
+            drawBg();
+            drawSnow();
             drawTrails();
             drawPipes();
             drawGifts();
@@ -1489,104 +1457,50 @@
                 updateDifficulty();
                 updateShield();
             }
-
             frameCount++;
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(loop);
         }
 
         // ==========================================
-        // EVENT LISTENERS
+        // EVENTS
         // ==========================================
         canvas.addEventListener('click', () => { sound.init(); jump(); });
         canvas.addEventListener('touchstart', e => { e.preventDefault(); sound.init(); jump(); });
         document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); sound.init(); jump(); } });
 
-        // Menu buttons
-        document.getElementById('playBtn').addEventListener('click', startGame);
-        document.getElementById('leaderboardBtn').addEventListener('click', () => {
-            showScreen('leaderboardScreen');
-            leaderboard.render('leaderboardList');
-        });
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            showScreen('settingsScreen');
-            updateSettingsUI();
-        });
+        $('btnPlay').onclick = start;
+        $('btnLeaderboard').onclick = () => { showScreen('leaderboardScreen'); lb.render('lbList'); };
+        $('btnSettings').onclick = () => { showScreen('settingsScreen'); updateToggles(); };
 
-        // Back buttons
-        document.getElementById('leaderboardBack').addEventListener('click', () => {
-            showScreen('mainMenu');
-            updateMenuStats();
-        });
-        document.getElementById('settingsBack').addEventListener('click', () => {
-            showScreen('mainMenu');
-            updateMenuStats();
-        });
+        $('lbBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
+        $('settingsBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
 
-        // Game over buttons
-        document.getElementById('retryBtn').addEventListener('click', startGame);
-        document.getElementById('menuBtn').addEventListener('click', () => {
-            showScreen('mainMenu');
-            updateMenuStats();
-        });
+        $('tabGlobal').onclick = () => { $('tabGlobal').classList.add('active'); $('tabLocal').classList.remove('active'); lb.render('lbList'); };
+        $('tabLocal').onclick = () => { $('tabLocal').classList.add('active'); $('tabGlobal').classList.remove('active'); lb.render('lbList', true); };
 
-        // Settings toggles
-        document.getElementById('soundToggle').addEventListener('click', () => {
-            settings.sound = !settings.sound;
-            saveSettings();
-            updateSettingsUI();
-        });
-        document.getElementById('vibrationToggle').addEventListener('click', () => {
-            settings.vibration = !settings.vibration;
-            saveSettings();
-            updateSettingsUI();
-        });
-        document.getElementById('resetBtn').addEventListener('click', () => {
+        $('toggleSound').onclick = () => { settings.sound = !settings.sound; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
+        $('toggleVibration').onclick = () => { settings.vibration = !settings.vibration; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
+        $('btnReset').onclick = () => {
             if (confirm('Сбросить весь прогресс?')) {
-                stats = { bestScore: 0, totalGifts: 0, gamesPlayed: 0 };
-                saveStats();
-                localStorage.removeItem('leaderboard');
-                updateMenuStats();
-                alert('Прогресс сброшен!');
+                stats = { best: 0, gifts: 0, games: 0 };
+                localStorage.setItem('avsStats', JSON.stringify(stats));
+                localStorage.removeItem('avsLB');
+                updateStats();
+                alert('Прогресс сброшен');
             }
-        });
+        };
 
-        // Leaderboard tabs
-        document.getElementById('tabGlobal').addEventListener('click', () => {
-            document.getElementById('tabGlobal').classList.add('active');
-            document.getElementById('tabLocal').classList.remove('active');
-            leaderboard.render('leaderboardList');
-        });
-        document.getElementById('tabLocal').addEventListener('click', () => {
-            document.getElementById('tabLocal').classList.add('active');
-            document.getElementById('tabGlobal').classList.remove('active');
-            const scores = leaderboard.getLocalScores();
-            const container = document.getElementById('leaderboardList');
-            if (scores.length === 0) {
-                container.innerHTML = '<div class="leaderboard-loading">Пока нет результатов</div>';
-                return;
-            }
-            const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7', '8', '9', '10'];
-            container.innerHTML = scores.slice(0, 10).map((e, i) => `
-                <div class="leaderboard-item">
-                    <span class="leaderboard-rank">${medals[i]}</span>
-                    <div class="leaderboard-avatar">${(e.player_name || 'И').charAt(0)}</div>
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">${e.player_name || 'Игрок'}</div>
-                        <div class="leaderboard-gifts">🎁 ${e.gifts || 0}</div>
-                    </div>
-                    <div class="leaderboard-score">${e.score}</div>
-                </div>
-            `).join('');
-        });
+        $('btnRetry').onclick = start;
+        $('btnHome').onclick = () => { showScreen('mainMenu'); updateStats(); };
 
         // ==========================================
         // INIT
         // ==========================================
-        initSnowflakes();
-        createMenuSnowflakes();
-        updateMenuStats();
-        updateSettingsUI();
-        gameLoop();
+        initSnow();
+        createSnowflakes();
+        updateStats();
+        updateToggles();
+        loop();
     </script>
 </body>
 </html>
