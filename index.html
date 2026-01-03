@@ -48,6 +48,18 @@
             pointer-events: none;
         }
 
+        .gift-counter {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+            pointer-events: none;
+        }
+
         .menu-overlay {
             position: absolute;
             top: 0;
@@ -58,9 +70,10 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 50, 0.85);
+            background: rgba(0, 0, 50, 0.9);
             border-radius: 16px;
             z-index: 20;
+            padding: 20px;
         }
 
         .menu-overlay.hidden {
@@ -68,35 +81,41 @@
         }
 
         .game-title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             color: #fff;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
 
         .game-subtitle {
-            font-size: 16px;
+            font-size: 14px;
             color: #8eb8ff;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .menu-score {
-            font-size: 24px;
+            font-size: 22px;
             color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .gifts-collected {
+            font-size: 16px;
+            color: #ff6b6b;
             margin-bottom: 10px;
         }
 
         .best-score {
-            font-size: 18px;
+            font-size: 16px;
             color: #aaa;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
 
         .play-btn {
-            padding: 15px 50px;
-            font-size: 20px;
+            padding: 12px 40px;
+            font-size: 18px;
             font-weight: bold;
             color: white;
             background: linear-gradient(135deg, #4a6cf7 0%, #2541b2 100%);
@@ -105,6 +124,7 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 5px 20px rgba(74, 108, 247, 0.4);
+            margin: 5px;
         }
 
         .play-btn:hover {
@@ -116,38 +136,134 @@
             transform: scale(0.98);
         }
 
-        .instructions {
-            margin-top: 20px;
-            color: #88a8d8;
+        .play-btn.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 5px 20px rgba(108, 117, 125, 0.4);
+            padding: 10px 30px;
             font-size: 14px;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            color: #88a8d8;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Таблица лидеров */
+        .leaderboard {
+            width: 100%;
+            max-width: 280px;
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .leaderboard-title {
+            font-size: 16px;
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            margin: 4px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .leaderboard-item.current {
+            background: rgba(74, 108, 247, 0.3);
+            border: 1px solid #4a6cf7;
+        }
+
+        .leaderboard-rank {
+            color: #ffd700;
+            font-weight: bold;
+            width: 25px;
+        }
+
+        .leaderboard-name {
+            color: #fff;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .leaderboard-score {
+            color: #8eb8ff;
+            font-weight: bold;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 25;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
+        <button class="sound-toggle" id="soundToggle">🔊</button>
         <div class="score-display" id="scoreDisplay">0</div>
+        <div class="gift-counter" id="giftCounter">🎁 0</div>
         <canvas id="gameCanvas"></canvas>
         
         <!-- Стартовое меню -->
         <div class="menu-overlay" id="startMenu">
             <div class="game-title">🎅 SANTA FLIGHT</div>
-            <div class="game-subtitle">Новогодний полёт</div>
-            <button class="play-btn" id="startBtn">ВЗЛЁТ</button>
-            <div class="instructions">Нажми чтобы лететь вверх</div>
+            <div class="game-subtitle">Aviation Service</div>
+            
+            <div class="leaderboard" id="startLeaderboard">
+                <div class="leaderboard-title">🏆 Топ игроков</div>
+                <div id="leaderboardList"></div>
+            </div>
+            
+            <button class="play-btn" id="startBtn">🚀 ВЗЛЁТ</button>
+            <div class="instructions">Тапай чтобы лететь • Собирай 🎁 подарки</div>
         </div>
 
         <!-- Меню окончания игры -->
         <div class="menu-overlay hidden" id="gameOverMenu">
             <div class="game-title">💥 КРУШЕНИЕ</div>
             <div class="menu-score" id="finalScore">Счёт: 0</div>
+            <div class="gifts-collected" id="giftsCollected">🎁 Подарков: 0</div>
             <div class="best-score" id="bestScore">Лучший: 0</div>
-            <button class="play-btn" id="restartBtn">ЗАНОВО</button>
+            
+            <div class="leaderboard">
+                <div class="leaderboard-title">🏆 Топ игроков</div>
+                <div id="gameOverLeaderboard"></div>
+            </div>
+            
+            <div class="buttons-row">
+                <button class="play-btn" id="restartBtn">🔄 ЗАНОВО</button>
+                <button class="play-btn secondary" id="menuBtn">📋 МЕНЮ</button>
+            </div>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // КОНФИГУРАЦИЯ ИГРЫ
+        // КОНФИГУРАЦИЯ
         // ==========================================
         const CONFIG = {
             CANVAS_WIDTH: 360,
@@ -163,10 +279,16 @@
 
             PIPES: {
                 WIDTH: 55,
-                GAP: 190,           // Увеличил для большого Санты
+                GAP: 190,
                 SPEED: 3,
                 SPAWN_RATE: 110,
                 MIN_HEIGHT: 80
+            },
+
+            GIFTS: {
+                SIZE: 35,
+                SPAWN_CHANCE: 0.4,  // 40% шанс появления подарка между трубами
+                POINTS: 5           // Очков за подарок
             },
 
             COLORS: {
@@ -177,6 +299,149 @@
         };
 
         // ==========================================
+        // ЗВУКОВАЯ СИСТЕМА
+        // ==========================================
+        class SoundManager {
+            constructor() {
+                this.enabled = localStorage.getItem('soundEnabled') !== 'false';
+                this.audioContext = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (this.initialized) return;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                } catch (e) {
+                    console.log('Web Audio API не поддерживается');
+                }
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                localStorage.setItem('soundEnabled', this.enabled);
+                return this.enabled;
+            }
+
+            play(type) {
+                if (!this.enabled || !this.audioContext) return;
+                
+                const ctx = this.audioContext;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                switch(type) {
+                    case 'jump':
+                        oscillator.frequency.setValueAtTime(400, ctx.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.1);
+                        break;
+                        
+                    case 'score':
+                        oscillator.frequency.setValueAtTime(523, ctx.currentTime);
+                        oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.2);
+                        break;
+                        
+                    case 'gift':
+                        // Магический звук подарка
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
+                        oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.3);
+                        
+                        // Дополнительный перезвон
+                        const osc2 = ctx.createOscillator();
+                        const gain2 = ctx.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(ctx.destination);
+                        osc2.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
+                        gain2.gain.setValueAtTime(0.2, ctx.currentTime + 0.1);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                        osc2.start(ctx.currentTime + 0.1);
+                        osc2.stop(ctx.currentTime + 0.4);
+                        break;
+                        
+                    case 'crash':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
+                        gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.5);
+                        break;
+                }
+            }
+        }
+
+        const sound = new SoundManager();
+
+        // ==========================================
+        // ТАБЛИЦА ЛИДЕРОВ
+        // ==========================================
+        class Leaderboard {
+            constructor() {
+                this.maxEntries = 5;
+                this.scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            }
+
+            add(name, score, gifts) {
+                this.scores.push({ name, score, gifts, date: Date.now() });
+                this.scores.sort((a, b) => b.score - a.score);
+                this.scores = this.scores.slice(0, this.maxEntries);
+                localStorage.setItem('leaderboard', JSON.stringify(this.scores));
+            }
+
+            getScores() {
+                return this.scores;
+            }
+
+            isHighScore(score) {
+                if (this.scores.length < this.maxEntries) return true;
+                return score > this.scores[this.scores.length - 1].score;
+            }
+
+            render(containerId, currentScore = null) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                if (this.scores.length === 0) {
+                    container.innerHTML = '<div style="color: #888; text-align: center; padding: 10px;">Пока нет результатов</div>';
+                    return;
+                }
+
+                container.innerHTML = this.scores.map((entry, index) => {
+                    const medals = ['🥇', '🥈', '🥉', '4', '5'];
+                    const isCurrent = currentScore !== null && entry.score === currentScore;
+                    return `
+                        <div class="leaderboard-item ${isCurrent ? 'current' : ''}">
+                            <span class="leaderboard-rank">${medals[index]}</span>
+                            <span class="leaderboard-name">${entry.name}</span>
+                            <span class="leaderboard-score">${entry.score} 🎁${entry.gifts || 0}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        const leaderboard = new Leaderboard();
+
+        // ==========================================
         // ИНИЦИАЛИЗАЦИЯ
         // ==========================================
         const canvas = document.getElementById('gameCanvas');
@@ -185,33 +450,40 @@
         canvas.width = CONFIG.CANVAS_WIDTH;
         canvas.height = CONFIG.CANVAS_HEIGHT;
 
-        // Загрузка фона
+        // Загрузка ресурсов
         const backgroundImage = new Image();
         backgroundImage.src = 'background.png';
 
-        // Загрузка персонажа (Санта)
         const playerImage = new Image();
         playerImage.src = 'player.png';
 
         // Telegram Web App
         let tg = window.Telegram?.WebApp;
+        let playerName = 'Игрок';
         if (tg) {
             tg.ready();
             tg.expand();
+            if (tg.initDataUnsafe?.user?.first_name) {
+                playerName = tg.initDataUnsafe.user.first_name;
+            }
         }
 
         // Элементы UI
         const scoreDisplay = document.getElementById('scoreDisplay');
+        const giftCounter = document.getElementById('giftCounter');
         const startMenu = document.getElementById('startMenu');
         const gameOverMenu = document.getElementById('gameOverMenu');
         const finalScoreEl = document.getElementById('finalScore');
+        const giftsCollectedEl = document.getElementById('giftsCollected');
         const bestScoreEl = document.getElementById('bestScore');
+        const soundToggle = document.getElementById('soundToggle');
 
         // ==========================================
         // ИГРОВЫЕ ПЕРЕМЕННЫЕ
         // ==========================================
         let gameState = 'menu';
         let score = 0;
+        let giftsCollected = 0;
         let bestScore = localStorage.getItem('aviationBestScore') || 0;
         let frameCount = 0;
 
@@ -223,10 +495,12 @@
         };
 
         let pipes = [];
+        let gifts = [];
         let particles = [];
         let snowflakes = [];
-        let trails = [];      // След от саней
-        let sparkles = [];    // Мерцающие огоньки гирлянды
+        let trails = [];
+        let sparkles = [];
+        let giftParticles = [];
 
         // Создаём снежинки
         for (let i = 0; i < 50; i++) {
@@ -244,11 +518,9 @@
         // ==========================================
         
         function drawBackground() {
-            // Рисуем загруженный фон
             if (backgroundImage.complete) {
                 ctx.drawImage(backgroundImage, 0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
             } else {
-                // Fallback если картинка не загрузилась
                 const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
                 gradient.addColorStop(0, '#3939c1');
                 gradient.addColorStop(1, '#2929a1');
@@ -265,7 +537,6 @@
                 ctx.arc(snow.x, snow.y, snow.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Движение снега
                 snow.y += snow.speed;
                 snow.x += Math.sin(frameCount * 0.01 + snow.x) * 0.3;
 
@@ -277,50 +548,36 @@
             ctx.globalAlpha = 1;
         }
 
-        // Санта в санях с анимациями
         function drawPlayer() {
             ctx.save();
             ctx.translate(player.x, player.y);
-            
-            // Наклон в зависимости от скорости
             ctx.rotate(player.rotation);
             
-            // Покачивание вверх-вниз
             const bobbing = Math.sin(frameCount * 0.15) * 3;
-            
-            // Небольшое покачивание влево-вправо
             const swaying = Math.sin(frameCount * 0.08) * 0.05;
             ctx.rotate(swaying);
 
-            // Размер персонажа
             const width = 80;
             const height = 65;
 
-            // Рисуем картинку Санты
             if (playerImage.complete) {
-                ctx.drawImage(
-                    playerImage, 
-                    -width / 2, 
-                    -height / 2 + bobbing, 
-                    width, 
-                    height
-                );
+                ctx.drawImage(playerImage, -width / 2, -height / 2 + bobbing, width, height);
             }
 
             ctx.restore();
 
-            // Эффект следа от саней (магические частицы)
+            // След от саней
             if (gameState === 'playing' && frameCount % 3 === 0) {
                 trails.push({
                     x: player.x - 35,
                     y: player.y + 10 + Math.random() * 10,
                     size: Math.random() * 4 + 2,
                     alpha: 0.8,
-                    color: Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100' // золотой или красный
+                    color: Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100'
                 });
             }
 
-            // Огоньки гирлянды (мерцающие частицы вокруг саней)
+            // Огоньки гирлянды
             if (gameState === 'playing' && frameCount % 8 === 0) {
                 const colors = ['255, 0, 0', '0, 255, 0', '255, 255, 0', '0, 150, 255'];
                 sparkles.push({
@@ -333,7 +590,6 @@
             }
         }
 
-        // След от саней
         function drawTrails() {
             trails.forEach((trail, index) => {
                 ctx.fillStyle = `rgba(${trail.color}, ${trail.alpha})`;
@@ -341,7 +597,6 @@
                 ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Движение следа
                 trail.x -= CONFIG.PIPES.SPEED * 0.8;
                 trail.alpha -= 0.02;
                 trail.size *= 0.97;
@@ -352,7 +607,6 @@
             });
         }
 
-        // Мерцающие огоньки
         function drawSparkles() {
             sparkles.forEach((spark, index) => {
                 ctx.fillStyle = `rgba(${spark.color}, ${spark.alpha})`;
@@ -360,7 +614,6 @@
                 ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Мерцание
                 spark.alpha -= 0.03;
                 spark.size *= 0.95;
 
@@ -370,26 +623,23 @@
             });
         }
 
-        // Трубы в виде зданий/башен
         function drawPipes() {
             pipes.forEach(pipe => {
-                // Верхняя труба (перевёрнутая башня)
                 const gradientTop = ctx.createLinearGradient(pipe.x, 0, pipe.x + CONFIG.PIPES.WIDTH, 0);
                 gradientTop.addColorStop(0, CONFIG.COLORS.PIPE);
                 gradientTop.addColorStop(0.5, CONFIG.COLORS.PIPE_HIGHLIGHT);
                 gradientTop.addColorStop(1, CONFIG.COLORS.PIPE);
                 
+                // Верхняя труба
                 ctx.fillStyle = gradientTop;
                 ctx.fillRect(pipe.x, 0, CONFIG.PIPES.WIDTH, pipe.topHeight);
                 
-                // Окна на верхней трубе
                 ctx.fillStyle = 'rgba(255, 255, 150, 0.6)';
                 for (let y = 20; y < pipe.topHeight - 30; y += 40) {
                     ctx.fillRect(pipe.x + 10, y, 12, 15);
                     ctx.fillRect(pipe.x + 33, y, 12, 15);
                 }
                 
-                // Наконечник верхней трубы
                 ctx.fillStyle = CONFIG.COLORS.PIPE_BORDER;
                 ctx.fillRect(pipe.x - 5, pipe.topHeight - 25, CONFIG.PIPES.WIDTH + 10, 25);
                 ctx.fillStyle = '#ff4444';
@@ -401,14 +651,12 @@
                 ctx.fillStyle = gradientTop;
                 ctx.fillRect(pipe.x, pipe.bottomY, CONFIG.PIPES.WIDTH, CONFIG.CANVAS_HEIGHT - pipe.bottomY);
                 
-                // Окна на нижней трубе
                 ctx.fillStyle = 'rgba(255, 255, 150, 0.6)';
                 for (let y = pipe.bottomY + 35; y < CONFIG.CANVAS_HEIGHT - 30; y += 40) {
                     ctx.fillRect(pipe.x + 10, y, 12, 15);
                     ctx.fillRect(pipe.x + 33, y, 12, 15);
                 }
                 
-                // Наконечник нижней трубы
                 ctx.fillStyle = CONFIG.COLORS.PIPE_BORDER;
                 ctx.fillRect(pipe.x - 5, pipe.bottomY, CONFIG.PIPES.WIDTH + 10, 25);
                 ctx.fillStyle = '#ff4444';
@@ -416,6 +664,80 @@
                 ctx.arc(pipe.x + CONFIG.PIPES.WIDTH / 2, pipe.bottomY + 25, 5, 0, Math.PI * 2);
                 ctx.fill();
             });
+        }
+
+        // Отрисовка подарков
+        function drawGifts() {
+            gifts.forEach(gift => {
+                ctx.save();
+                ctx.translate(gift.x, gift.y);
+                
+                // Покачивание
+                const wobble = Math.sin(frameCount * 0.1 + gift.x) * 5;
+                ctx.rotate(Math.sin(frameCount * 0.05) * 0.1);
+                
+                // Свечение
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 15 + Math.sin(frameCount * 0.1) * 5;
+                
+                // Коробка подарка
+                const size = CONFIG.GIFTS.SIZE;
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(-size/2, -size/2 + wobble, size, size);
+                
+                // Лента вертикальная
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(-4, -size/2 + wobble, 8, size);
+                
+                // Лента горизонтальная
+                ctx.fillRect(-size/2, -4 + wobble, size, 8);
+                
+                // Бантик
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.ellipse(-8, -size/2 - 5 + wobble, 8, 6, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(8, -size/2 - 5 + wobble, 8, 6, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            });
+        }
+
+        // Частицы при сборе подарка
+        function drawGiftParticles() {
+            giftParticles.forEach((p, index) => {
+                ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1; // гравитация
+                p.alpha -= 0.02;
+
+                if (p.alpha <= 0) {
+                    giftParticles.splice(index, 1);
+                }
+            });
+        }
+
+        function createGiftExplosion(x, y) {
+            const colors = ['255, 215, 0', '241, 196, 15', '231, 76, 60', '46, 204, 113'];
+            for (let i = 0; i < 20; i++) {
+                giftParticles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8 - 3,
+                    size: Math.random() * 6 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1
+                });
+            }
         }
 
         function drawParticles() {
@@ -458,6 +780,7 @@
         function jump() {
             if (gameState === 'playing') {
                 player.velocity = CONFIG.PLAYER.JUMP_FORCE;
+                sound.play('jump');
                 
                 if (navigator.vibrate) {
                     navigator.vibrate(30);
@@ -494,6 +817,16 @@
                     bottomY: topHeight + CONFIG.PIPES.GAP,
                     passed: false
                 });
+
+                // Спавн подарка
+                if (Math.random() < CONFIG.GIFTS.SPAWN_CHANCE) {
+                    const giftY = topHeight + CONFIG.PIPES.GAP / 2;
+                    gifts.push({
+                        x: CONFIG.CANVAS_WIDTH + 50,
+                        y: giftY,
+                        collected: false
+                    });
+                }
             }
 
             pipes.forEach((pipe, index) => {
@@ -503,6 +836,7 @@
                     pipe.passed = true;
                     score++;
                     scoreDisplay.textContent = score;
+                    sound.play('score');
 
                     if (tg?.HapticFeedback) {
                         tg.HapticFeedback.impactOccurred('light');
@@ -519,8 +853,42 @@
             });
         }
 
+        function updateGifts() {
+            gifts.forEach((gift, index) => {
+                gift.x -= CONFIG.PIPES.SPEED;
+
+                // Проверка сбора подарка
+                if (!gift.collected) {
+                    const dx = player.x - gift.x;
+                    const dy = player.y - gift.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 45) {
+                        gift.collected = true;
+                        giftsCollected++;
+                        score += CONFIG.GIFTS.POINTS;
+                        scoreDisplay.textContent = score;
+                        giftCounter.textContent = `🎁 ${giftsCollected}`;
+                        
+                        createGiftExplosion(gift.x, gift.y);
+                        sound.play('gift');
+
+                        if (tg?.HapticFeedback) {
+                            tg.HapticFeedback.impactOccurred('medium');
+                        }
+                        if (navigator.vibrate) {
+                            navigator.vibrate([50, 30, 50]);
+                        }
+                    }
+                }
+
+                if (gift.x < -50 || gift.collected) {
+                    gifts.splice(index, 1);
+                }
+            });
+        }
+
         function checkCollision(pipe) {
-            // Hitbox чуть меньше картинки для fair gameplay
             const playerLeft = player.x - 30;
             const playerRight = player.x + 30;
             const playerTop = player.y - 25;
@@ -542,14 +910,23 @@
             gameState = 'gameover';
             
             createExplosion(player.x, player.y);
+            sound.play('crash');
 
             if (score > bestScore) {
                 bestScore = score;
                 localStorage.setItem('aviationBestScore', bestScore);
             }
 
+            // Добавляем в таблицу лидеров
+            if (leaderboard.isHighScore(score)) {
+                leaderboard.add(playerName, score, giftsCollected);
+            }
+
             finalScoreEl.textContent = `Счёт: ${score}`;
+            giftsCollectedEl.textContent = `🎁 Подарков: ${giftsCollected}`;
             bestScoreEl.textContent = `Лучший: ${bestScore}`;
+            
+            leaderboard.render('gameOverLeaderboard', score);
             gameOverMenu.classList.remove('hidden');
 
             if (navigator.vibrate) {
@@ -568,19 +945,31 @@
                 rotation: 0
             };
             pipes = [];
+            gifts = [];
             particles = [];
             trails = [];
             sparkles = [];
+            giftParticles = [];
             score = 0;
+            giftsCollected = 0;
             frameCount = 0;
             scoreDisplay.textContent = '0';
+            giftCounter.textContent = '🎁 0';
         }
 
         function startGame() {
+            sound.init();
             resetGame();
             gameState = 'playing';
             startMenu.classList.add('hidden');
             gameOverMenu.classList.add('hidden');
+        }
+
+        function showMenu() {
+            gameState = 'menu';
+            startMenu.classList.remove('hidden');
+            gameOverMenu.classList.add('hidden');
+            leaderboard.render('leaderboardList');
         }
 
         // ==========================================
@@ -589,15 +978,18 @@
         function gameLoop() {
             drawBackground();
             drawSnowflakes();
-            drawTrails();        // След от саней (за игроком)
+            drawTrails();
             drawPipes();
-            drawSparkles();      // Огоньки гирлянды
+            drawGifts();
+            drawGiftParticles();
+            drawSparkles();
             drawPlayer();
             drawParticles();
 
             if (gameState === 'playing') {
                 updatePlayer();
                 updatePipes();
+                updateGifts();
                 frameCount++;
             } else {
                 frameCount++;
@@ -610,24 +1002,39 @@
         // СОБЫТИЯ
         // ==========================================
         
-        canvas.addEventListener('click', jump);
+        canvas.addEventListener('click', () => {
+            sound.init();
+            jump();
+        });
+        
         canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            sound.init();
             jump();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
+                sound.init();
                 jump();
             }
         });
 
         document.getElementById('startBtn').addEventListener('click', startGame);
         document.getElementById('restartBtn').addEventListener('click', startGame);
+        document.getElementById('menuBtn').addEventListener('click', showMenu);
 
-        // Запуск
+        soundToggle.addEventListener('click', () => {
+            sound.init();
+            const enabled = sound.toggle();
+            soundToggle.textContent = enabled ? '🔊' : '🔇';
+        });
+
+        // Инициализация
+        soundToggle.textContent = sound.enabled ? '🔊' : '🔇';
         bestScoreEl.textContent = `Лучший: ${bestScore}`;
+        leaderboard.render('leaderboardList');
         gameLoop();
     </script>
 </body>
