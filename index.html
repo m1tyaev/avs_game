@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviation Game</title>
+    <title>Santa Flight - Aviation Service</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -130,7 +130,7 @@
         
         <!-- Стартовое меню -->
         <div class="menu-overlay" id="startMenu">
-            <div class="game-title">✈️ AVIATION SERVICE</div>
+            <div class="game-title">🎅 SANTA FLIGHT</div>
             <div class="game-subtitle">Новогодний полёт</div>
             <button class="play-btn" id="startBtn">ВЗЛЁТ</button>
             <div class="instructions">Нажми чтобы лететь вверх</div>
@@ -163,7 +163,7 @@
 
             PIPES: {
                 WIDTH: 55,
-                GAP: 170,
+                GAP: 190,           // Увеличил для большого Санты
                 SPEED: 3,
                 SPAWN_RATE: 110,
                 MIN_HEIGHT: 80
@@ -188,6 +188,10 @@
         // Загрузка фона
         const backgroundImage = new Image();
         backgroundImage.src = 'background.png';
+
+        // Загрузка персонажа (Санта)
+        const playerImage = new Image();
+        playerImage.src = 'player.png';
 
         // Telegram Web App
         let tg = window.Telegram?.WebApp;
@@ -221,6 +225,8 @@
         let pipes = [];
         let particles = [];
         let snowflakes = [];
+        let trails = [];      // След от саней
+        let sparkles = [];    // Мерцающие огоньки гирлянды
 
         // Создаём снежинки
         for (let i = 0; i < 50; i++) {
@@ -271,88 +277,97 @@
             ctx.globalAlpha = 1;
         }
 
-        // Самолёт
+        // Санта в санях с анимациями
         function drawPlayer() {
             ctx.save();
             ctx.translate(player.x, player.y);
-            ctx.rotate(player.rotation);
-
-            // Тень самолёта
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.beginPath();
-            ctx.ellipse(3, 3, 22, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Корпус самолёта (фюзеляж)
-            ctx.fillStyle = '#e8e8e8';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 22, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Полоса на корпусе
-            ctx.fillStyle = '#4a6cf7';
-            ctx.fillRect(-15, -2, 30, 4);
-
-            // Кокпит (стекло)
-            ctx.fillStyle = '#87CEEB';
-            ctx.beginPath();
-            ctx.ellipse(12, -2, 6, 4, 0.3, 0, Math.PI * 2);
-            ctx.fill();
             
-            // Блик на стекле
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.beginPath();
-            ctx.ellipse(13, -3, 3, 2, 0.3, 0, Math.PI * 2);
-            ctx.fill();
+            // Наклон в зависимости от скорости
+            ctx.rotate(player.rotation);
+            
+            // Покачивание вверх-вниз
+            const bobbing = Math.sin(frameCount * 0.15) * 3;
+            
+            // Небольшое покачивание влево-вправо
+            const swaying = Math.sin(frameCount * 0.08) * 0.05;
+            ctx.rotate(swaying);
 
-            // Крыло верхнее
-            ctx.fillStyle = '#c0c0c0';
-            ctx.beginPath();
-            ctx.moveTo(-5, -6);
-            ctx.lineTo(5, -6);
-            ctx.lineTo(8, -20);
-            ctx.lineTo(-8, -20);
-            ctx.closePath();
-            ctx.fill();
+            // Размер персонажа
+            const width = 80;
+            const height = 65;
 
-            // Крыло нижнее
-            ctx.beginPath();
-            ctx.moveTo(-5, 6);
-            ctx.lineTo(5, 6);
-            ctx.lineTo(8, 20);
-            ctx.lineTo(-8, 20);
-            ctx.closePath();
-            ctx.fill();
-
-            // Хвост
-            ctx.fillStyle = '#d0d0d0';
-            ctx.beginPath();
-            ctx.moveTo(-18, 0);
-            ctx.lineTo(-25, -10);
-            ctx.lineTo(-25, 10);
-            ctx.closePath();
-            ctx.fill();
-
-            // Красные огни на крыльях
-            ctx.fillStyle = '#ff4444';
-            ctx.beginPath();
-            ctx.arc(-6, -18, 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#44ff44';
-            ctx.beginPath();
-            ctx.arc(-6, 18, 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Пропеллер (анимированный)
-            ctx.fillStyle = '#333';
-            ctx.save();
-            ctx.translate(22, 0);
-            ctx.rotate(frameCount * 0.5);
-            ctx.fillRect(-2, -12, 4, 24);
-            ctx.fillRect(-12, -2, 24, 4);
-            ctx.restore();
+            // Рисуем картинку Санты
+            if (playerImage.complete) {
+                ctx.drawImage(
+                    playerImage, 
+                    -width / 2, 
+                    -height / 2 + bobbing, 
+                    width, 
+                    height
+                );
+            }
 
             ctx.restore();
+
+            // Эффект следа от саней (магические частицы)
+            if (gameState === 'playing' && frameCount % 3 === 0) {
+                trails.push({
+                    x: player.x - 35,
+                    y: player.y + 10 + Math.random() * 10,
+                    size: Math.random() * 4 + 2,
+                    alpha: 0.8,
+                    color: Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100' // золотой или красный
+                });
+            }
+
+            // Огоньки гирлянды (мерцающие частицы вокруг саней)
+            if (gameState === 'playing' && frameCount % 8 === 0) {
+                const colors = ['255, 0, 0', '0, 255, 0', '255, 255, 0', '0, 150, 255'];
+                sparkles.push({
+                    x: player.x + (Math.random() - 0.5) * 60,
+                    y: player.y + (Math.random() - 0.5) * 40,
+                    size: Math.random() * 3 + 1,
+                    alpha: 1,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        // След от саней
+        function drawTrails() {
+            trails.forEach((trail, index) => {
+                ctx.fillStyle = `rgba(${trail.color}, ${trail.alpha})`;
+                ctx.beginPath();
+                ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Движение следа
+                trail.x -= CONFIG.PIPES.SPEED * 0.8;
+                trail.alpha -= 0.02;
+                trail.size *= 0.97;
+
+                if (trail.alpha <= 0 || trail.x < -10) {
+                    trails.splice(index, 1);
+                }
+            });
+        }
+
+        // Мерцающие огоньки
+        function drawSparkles() {
+            sparkles.forEach((spark, index) => {
+                ctx.fillStyle = `rgba(${spark.color}, ${spark.alpha})`;
+                ctx.beginPath();
+                ctx.arc(spark.x, spark.y, spark.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Мерцание
+                spark.alpha -= 0.03;
+                spark.size *= 0.95;
+
+                if (spark.alpha <= 0) {
+                    sparkles.splice(index, 1);
+                }
+            });
         }
 
         // Трубы в виде зданий/башен
@@ -505,10 +520,11 @@
         }
 
         function checkCollision(pipe) {
-            const playerLeft = player.x - 18;
-            const playerRight = player.x + 18;
-            const playerTop = player.y - 18;
-            const playerBottom = player.y + 18;
+            // Hitbox чуть меньше картинки для fair gameplay
+            const playerLeft = player.x - 30;
+            const playerRight = player.x + 30;
+            const playerTop = player.y - 25;
+            const playerBottom = player.y + 25;
 
             const pipeLeft = pipe.x;
             const pipeRight = pipe.x + CONFIG.PIPES.WIDTH;
@@ -553,6 +569,8 @@
             };
             pipes = [];
             particles = [];
+            trails = [];
+            sparkles = [];
             score = 0;
             frameCount = 0;
             scoreDisplay.textContent = '0';
@@ -571,7 +589,9 @@
         function gameLoop() {
             drawBackground();
             drawSnowflakes();
+            drawTrails();        // След от саней (за игроком)
             drawPipes();
+            drawSparkles();      // Огоньки гирлянды
             drawPlayer();
             drawParticles();
 
