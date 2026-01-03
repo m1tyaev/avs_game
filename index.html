@@ -60,6 +60,40 @@
             pointer-events: none;
         }
 
+        .shield-indicator {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .shield-indicator.active {
+            opacity: 1;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+
+        .speed-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #88a8d8;
+            z-index: 10;
+            pointer-events: none;
+        }
+
         .menu-overlay {
             position: absolute;
             top: 0;
@@ -74,6 +108,7 @@
             border-radius: 16px;
             z-index: 20;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .menu-overlay.hidden {
@@ -92,7 +127,7 @@
         .game-subtitle {
             font-size: 14px;
             color: #8eb8ff;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .menu-score {
@@ -104,13 +139,26 @@
         .gifts-collected {
             font-size: 16px;
             color: #ff6b6b;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .best-score {
             font-size: 16px;
             color: #aaa;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+        }
+
+        .new-record {
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: bold;
+            animation: glow 1s infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 5px #ffd700; }
+            50% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffa500; }
         }
 
         .play-btn {
@@ -139,22 +187,22 @@
         .play-btn.secondary {
             background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
             box-shadow: 0 5px 20px rgba(108, 117, 125, 0.4);
-            padding: 10px 30px;
+            padding: 10px 25px;
             font-size: 14px;
         }
 
         .instructions {
-            margin-top: 15px;
+            margin-top: 10px;
             color: #88a8d8;
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
+            line-height: 1.4;
         }
 
-        /* Таблица лидеров */
         .leaderboard {
             width: 100%;
-            max-width: 280px;
-            margin: 15px 0;
+            max-width: 300px;
+            margin: 10px 0;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 10px;
@@ -164,7 +212,19 @@
             font-size: 16px;
             color: #ffd700;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .leaderboard-title .global {
+            font-size: 10px;
+            background: #4a6cf7;
+            padding: 2px 6px;
+            border-radius: 10px;
+            color: white;
         }
 
         .leaderboard-item {
@@ -172,15 +232,20 @@
             justify-content: space-between;
             align-items: center;
             padding: 6px 10px;
-            margin: 4px 0;
+            margin: 3px 0;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .leaderboard-item.current {
             background: rgba(74, 108, 247, 0.3);
             border: 1px solid #4a6cf7;
+        }
+
+        .leaderboard-item.me {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
         }
 
         .leaderboard-rank {
@@ -192,12 +257,22 @@
         .leaderboard-name {
             color: #fff;
             flex: 1;
-            margin-left: 10px;
+            margin-left: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .leaderboard-score {
             color: #8eb8ff;
             font-weight: bold;
+        }
+
+        .leaderboard-loading {
+            color: #888;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
         }
 
         .sound-toggle {
@@ -207,9 +282,9 @@
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
             cursor: pointer;
             z-index: 25;
         }
@@ -219,6 +294,30 @@
             gap: 10px;
             margin-top: 10px;
         }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 3px;
+        }
+
+        .tab {
+            padding: 6px 15px;
+            font-size: 12px;
+            color: #888;
+            background: transparent;
+            border: none;
+            border-radius: 17px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #4a6cf7;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +325,8 @@
         <button class="sound-toggle" id="soundToggle">🔊</button>
         <div class="score-display" id="scoreDisplay">0</div>
         <div class="gift-counter" id="giftCounter">🎁 0</div>
+        <div class="shield-indicator" id="shieldIndicator">🛡️ НЕУЯЗВИМОСТЬ</div>
+        <div class="speed-indicator" id="speedIndicator">⚡ x1.0</div>
         <canvas id="gameCanvas"></canvas>
         
         <!-- Стартовое меню -->
@@ -233,13 +334,26 @@
             <div class="game-title">🎅 SANTA FLIGHT</div>
             <div class="game-subtitle">Aviation Service</div>
             
+            <div class="tabs">
+                <button class="tab active" id="tabGlobal">🌐 Мировой</button>
+                <button class="tab" id="tabLocal">📱 Локальный</button>
+            </div>
+            
             <div class="leaderboard" id="startLeaderboard">
-                <div class="leaderboard-title">🏆 Топ игроков</div>
-                <div id="leaderboardList"></div>
+                <div class="leaderboard-title">
+                    🏆 Топ игроков
+                    <span class="global" id="leaderboardBadge">GLOBAL</span>
+                </div>
+                <div id="leaderboardList">
+                    <div class="leaderboard-loading">Загрузка...</div>
+                </div>
             </div>
             
             <button class="play-btn" id="startBtn">🚀 ВЗЛЁТ</button>
-            <div class="instructions">Тапай чтобы лететь • Собирай 🎁 подарки</div>
+            <div class="instructions">
+                Тапай чтобы лететь • Собирай 🎁 подарки<br>
+                🛡️ Подарок даёт 3 сек неуязвимости!
+            </div>
         </div>
 
         <!-- Меню окончания игры -->
@@ -248,22 +362,31 @@
             <div class="menu-score" id="finalScore">Счёт: 0</div>
             <div class="gifts-collected" id="giftsCollected">🎁 Подарков: 0</div>
             <div class="best-score" id="bestScore">Лучший: 0</div>
+            <div class="new-record hidden" id="newRecord">🎉 НОВЫЙ РЕКОРД!</div>
             
             <div class="leaderboard">
-                <div class="leaderboard-title">🏆 Топ игроков</div>
-                <div id="gameOverLeaderboard"></div>
+                <div class="leaderboard-title">🏆 Топ игроков <span class="global">GLOBAL</span></div>
+                <div id="gameOverLeaderboard">
+                    <div class="leaderboard-loading">Загрузка...</div>
+                </div>
             </div>
             
             <div class="buttons-row">
                 <button class="play-btn" id="restartBtn">🔄 ЗАНОВО</button>
-                <button class="play-btn secondary" id="menuBtn">📋 МЕНЮ</button>
+                <button class="play-btn secondary" id="shareBtn">📤 ПОДЕЛИТЬСЯ</button>
             </div>
         </div>
     </div>
 
     <script>
         // ==========================================
-        // КОНФИГУРАЦИЯ
+        // КОНФИГУРАЦИЯ SUPABASE
+        // ==========================================
+        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+        const SUPABASE_KEY = 'YOUR_ANON_KEY';
+        
+        // ==========================================
+        // КОНФИГУРАЦИЯ ИГРЫ
         // ==========================================
         const CONFIG = {
             CANVAS_WIDTH: 360,
@@ -280,15 +403,23 @@
             PIPES: {
                 WIDTH: 55,
                 GAP: 190,
-                SPEED: 3,
+                BASE_SPEED: 3,
                 SPAWN_RATE: 110,
                 MIN_HEIGHT: 80
             },
 
             GIFTS: {
                 SIZE: 35,
-                SPAWN_CHANCE: 0.4,  // 40% шанс появления подарка между трубами
-                POINTS: 5           // Очков за подарок
+                SPAWN_CHANCE: 0.4,
+                POINTS: 5,
+                SHIELD_DURATION: 180  // 3 секунды при 60fps
+            },
+
+            DIFFICULTY: {
+                SPEED_INCREASE: 0.0005,  // Увеличение скорости за кадр
+                MAX_SPEED_MULTIPLIER: 2.0,
+                GAP_DECREASE: 0.05,      // Уменьшение зазора
+                MIN_GAP: 140
             },
 
             COLORS: {
@@ -297,6 +428,120 @@
                 PIPE_HIGHLIGHT: '#6a9cec'
             }
         };
+
+        // ==========================================
+        // ГЛОБАЛЬНЫЙ ЛИДЕРБОРД (Supabase)
+        // ==========================================
+        class GlobalLeaderboard {
+            constructor() {
+                this.enabled = SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co';
+                this.cache = [];
+                this.lastFetch = 0;
+            }
+
+            async fetchScores() {
+                if (!this.enabled) {
+                    return this.getLocalScores();
+                }
+
+                // Кэш на 30 секунд
+                if (Date.now() - this.lastFetch < 30000 && this.cache.length > 0) {
+                    return this.cache;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=10`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_KEY}`
+                            }
+                        }
+                    );
+                    
+                    if (response.ok) {
+                        this.cache = await response.json();
+                        this.lastFetch = Date.now();
+                        return this.cache;
+                    }
+                } catch (e) {
+                    console.log('Ошибка загрузки лидерборда:', e);
+                }
+                
+                return this.getLocalScores();
+            }
+
+            async submitScore(name, score, visibleScore, gifts, oderId) {
+                // Сохраняем локально в любом случае
+                this.saveLocalScore(name, score, gifts);
+
+                if (!this.enabled) return;
+
+                try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            player_name: name.substring(0, 50),
+                            score: score,
+                            gifts: gifts,
+                            user_id: oderId || null
+                        })
+                    });
+                    
+                    // Обновляем кэш
+                    this.lastFetch = 0;
+                } catch (e) {
+                    console.log('Ошибка отправки счёта:', e);
+                }
+            }
+
+            getLocalScores() {
+                const scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+                return scores.slice(0, 10);
+            }
+
+            saveLocalScore(name, score, gifts) {
+                const scores = this.getLocalScores();
+                scores.push({ player_name: name, score, gifts, date: Date.now() });
+                scores.sort((a, b) => b.score - a.score);
+                localStorage.setItem('leaderboard', JSON.stringify(scores.slice(0, 20)));
+            }
+
+            render(containerId, currentScore = null, currentName = null) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                this.fetchScores().then(scores => {
+                    if (scores.length === 0) {
+                        container.innerHTML = '<div class="leaderboard-loading">Пока нет результатов</div>';
+                        return;
+                    }
+
+                    container.innerHTML = scores.slice(0, 10).map((entry, index) => {
+                        const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7', '8', '9', '10'];
+                        const name = entry.player_name || entry.name || 'Игрок';
+                        const isMe = currentName && name === currentName && entry.score === currentScore;
+                        
+                        return `
+                            <div class="leaderboard-item ${isMe ? 'me' : ''}">
+                                <span class="leaderboard-rank">${medals[index]}</span>
+                                <span class="leaderboard-name">${name}</span>
+                                <span class="leaderboard-score">${entry.score}</span>
+                            </div>
+                        `;
+                    }).join('');
+                });
+            }
+        }
+
+        const globalLeaderboard = new GlobalLeaderboard();
 
         // ==========================================
         // ЗВУКОВАЯ СИСТЕМА
@@ -338,7 +583,7 @@
                     case 'jump':
                         oscillator.frequency.setValueAtTime(400, ctx.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
-                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
                         oscillator.start(ctx.currentTime);
                         oscillator.stop(ctx.currentTime + 0.1);
@@ -347,40 +592,38 @@
                     case 'score':
                         oscillator.frequency.setValueAtTime(523, ctx.currentTime);
                         oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
                         oscillator.start(ctx.currentTime);
                         oscillator.stop(ctx.currentTime + 0.2);
                         break;
                         
                     case 'gift':
-                        // Магический звук подарка
                         oscillator.type = 'sine';
                         oscillator.frequency.setValueAtTime(800, ctx.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
-                        oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
-                        gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
                         oscillator.start(ctx.currentTime);
                         oscillator.stop(ctx.currentTime + 0.3);
-                        
-                        // Дополнительный перезвон
-                        const osc2 = ctx.createOscillator();
-                        const gain2 = ctx.createGain();
-                        osc2.connect(gain2);
-                        gain2.connect(ctx.destination);
-                        osc2.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
-                        gain2.gain.setValueAtTime(0.2, ctx.currentTime + 0.1);
-                        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                        osc2.start(ctx.currentTime + 0.1);
-                        osc2.stop(ctx.currentTime + 0.4);
+                        break;
+
+                    case 'shield':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(600, ctx.currentTime);
+                        oscillator.frequency.setValueAtTime(800, ctx.currentTime + 0.1);
+                        oscillator.frequency.setValueAtTime(1000, ctx.currentTime + 0.2);
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.4);
                         break;
                         
                     case 'crash':
                         oscillator.type = 'sawtooth';
                         oscillator.frequency.setValueAtTime(200, ctx.currentTime);
                         oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
-                        gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
                         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
                         oscillator.start(ctx.currentTime);
                         oscillator.stop(ctx.currentTime + 0.5);
@@ -392,56 +635,6 @@
         const sound = new SoundManager();
 
         // ==========================================
-        // ТАБЛИЦА ЛИДЕРОВ
-        // ==========================================
-        class Leaderboard {
-            constructor() {
-                this.maxEntries = 5;
-                this.scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            }
-
-            add(name, score, gifts) {
-                this.scores.push({ name, score, gifts, date: Date.now() });
-                this.scores.sort((a, b) => b.score - a.score);
-                this.scores = this.scores.slice(0, this.maxEntries);
-                localStorage.setItem('leaderboard', JSON.stringify(this.scores));
-            }
-
-            getScores() {
-                return this.scores;
-            }
-
-            isHighScore(score) {
-                if (this.scores.length < this.maxEntries) return true;
-                return score > this.scores[this.scores.length - 1].score;
-            }
-
-            render(containerId, currentScore = null) {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-
-                if (this.scores.length === 0) {
-                    container.innerHTML = '<div style="color: #888; text-align: center; padding: 10px;">Пока нет результатов</div>';
-                    return;
-                }
-
-                container.innerHTML = this.scores.map((entry, index) => {
-                    const medals = ['🥇', '🥈', '🥉', '4', '5'];
-                    const isCurrent = currentScore !== null && entry.score === currentScore;
-                    return `
-                        <div class="leaderboard-item ${isCurrent ? 'current' : ''}">
-                            <span class="leaderboard-rank">${medals[index]}</span>
-                            <span class="leaderboard-name">${entry.name}</span>
-                            <span class="leaderboard-score">${entry.score} 🎁${entry.gifts || 0}</span>
-                        </div>
-                    `;
-                }).join('');
-            }
-        }
-
-        const leaderboard = new Leaderboard();
-
-        // ==========================================
         // ИНИЦИАЛИЗАЦИЯ
         // ==========================================
         const canvas = document.getElementById('gameCanvas');
@@ -450,32 +643,35 @@
         canvas.width = CONFIG.CANVAS_WIDTH;
         canvas.height = CONFIG.CANVAS_HEIGHT;
 
-        // Загрузка ресурсов
         const backgroundImage = new Image();
         backgroundImage.src = 'background.png';
 
         const playerImage = new Image();
         playerImage.src = 'player.png';
 
-        // Telegram Web App
         let tg = window.Telegram?.WebApp;
         let playerName = 'Игрок';
+        let oderId = null;
         if (tg) {
             tg.ready();
             tg.expand();
-            if (tg.initDataUnsafe?.user?.first_name) {
-                playerName = tg.initDataUnsafe.user.first_name;
+            if (tg.initDataUnsafe?.user) {
+                playerName = tg.initDataUnsafe.user.first_name || 'Игрок';
+                oderId = tg.initDataUnsafe.user.id?.toString();
             }
         }
 
-        // Элементы UI
+        // UI элементы
         const scoreDisplay = document.getElementById('scoreDisplay');
         const giftCounter = document.getElementById('giftCounter');
+        const shieldIndicator = document.getElementById('shieldIndicator');
+        const speedIndicator = document.getElementById('speedIndicator');
         const startMenu = document.getElementById('startMenu');
         const gameOverMenu = document.getElementById('gameOverMenu');
         const finalScoreEl = document.getElementById('finalScore');
         const giftsCollectedEl = document.getElementById('giftsCollected');
         const bestScoreEl = document.getElementById('bestScore');
+        const newRecordEl = document.getElementById('newRecord');
         const soundToggle = document.getElementById('soundToggle');
 
         // ==========================================
@@ -484,8 +680,17 @@
         let gameState = 'menu';
         let score = 0;
         let giftsCollected = 0;
-        let bestScore = localStorage.getItem('aviationBestScore') || 0;
+        let bestScore = parseInt(localStorage.getItem('aviationBestScore')) || 0;
         let frameCount = 0;
+        let showLocalLeaderboard = false;
+
+        // Сложность
+        let speedMultiplier = 1.0;
+        let currentGap = CONFIG.PIPES.GAP;
+
+        // Щит (неуязвимость)
+        let shieldActive = false;
+        let shieldTimer = 0;
 
         let player = {
             x: CONFIG.PLAYER.X_POSITION,
@@ -501,8 +706,9 @@
         let trails = [];
         let sparkles = [];
         let giftParticles = [];
+        let shieldParticles = [];
 
-        // Создаём снежинки
+        // Снежинки
         for (let i = 0; i < 50; i++) {
             snowflakes.push({
                 x: Math.random() * CONFIG.CANVAS_WIDTH,
@@ -537,7 +743,7 @@
                 ctx.arc(snow.x, snow.y, snow.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                snow.y += snow.speed;
+                snow.y += snow.speed * speedMultiplier;
                 snow.x += Math.sin(frameCount * 0.01 + snow.x) * 0.3;
 
                 if (snow.y > CONFIG.CANVAS_HEIGHT) {
@@ -557,6 +763,19 @@
             const swaying = Math.sin(frameCount * 0.08) * 0.05;
             ctx.rotate(swaying);
 
+            // Свечение щита
+            if (shieldActive) {
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 30 + Math.sin(frameCount * 0.2) * 10;
+                
+                // Круг щита
+                ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 + Math.sin(frameCount * 0.1) * 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, bobbing, 50, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             const width = 80;
             const height = 65;
 
@@ -564,7 +783,22 @@
                 ctx.drawImage(playerImage, -width / 2, -height / 2 + bobbing, width, height);
             }
 
+            ctx.shadowBlur = 0;
             ctx.restore();
+
+            // Частицы щита
+            if (shieldActive && frameCount % 2 === 0) {
+                const angle = Math.random() * Math.PI * 2;
+                shieldParticles.push({
+                    x: player.x + Math.cos(angle) * 45,
+                    y: player.y + Math.sin(angle) * 45,
+                    vx: Math.cos(angle) * 0.5,
+                    vy: Math.sin(angle) * 0.5,
+                    size: Math.random() * 3 + 1,
+                    alpha: 1,
+                    color: '0, 255, 255'
+                });
+            }
 
             // След от саней
             if (gameState === 'playing' && frameCount % 3 === 0) {
@@ -573,13 +807,15 @@
                     y: player.y + 10 + Math.random() * 10,
                     size: Math.random() * 4 + 2,
                     alpha: 0.8,
-                    color: Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100'
+                    color: shieldActive ? '0, 255, 255' : (Math.random() > 0.5 ? '255, 215, 0' : '255, 100, 100')
                 });
             }
 
-            // Огоньки гирлянды
+            // Огоньки
             if (gameState === 'playing' && frameCount % 8 === 0) {
-                const colors = ['255, 0, 0', '0, 255, 0', '255, 255, 0', '0, 150, 255'];
+                const colors = shieldActive 
+                    ? ['0, 255, 255', '100, 255, 255', '0, 200, 255']
+                    : ['255, 0, 0', '0, 255, 0', '255, 255, 0', '0, 150, 255'];
                 sparkles.push({
                     x: player.x + (Math.random() - 0.5) * 60,
                     y: player.y + (Math.random() - 0.5) * 40,
@@ -590,6 +826,23 @@
             }
         }
 
+        function drawShieldParticles() {
+            shieldParticles.forEach((p, index) => {
+                ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.03;
+
+                if (p.alpha <= 0) {
+                    shieldParticles.splice(index, 1);
+                }
+            });
+        }
+
         function drawTrails() {
             trails.forEach((trail, index) => {
                 ctx.fillStyle = `rgba(${trail.color}, ${trail.alpha})`;
@@ -597,7 +850,7 @@
                 ctx.arc(trail.x, trail.y, trail.size, 0, Math.PI * 2);
                 ctx.fill();
 
-                trail.x -= CONFIG.PIPES.SPEED * 0.8;
+                trail.x -= CONFIG.PIPES.BASE_SPEED * speedMultiplier * 0.8;
                 trail.alpha -= 0.02;
                 trail.size *= 0.97;
 
@@ -630,7 +883,6 @@
                 gradientTop.addColorStop(0.5, CONFIG.COLORS.PIPE_HIGHLIGHT);
                 gradientTop.addColorStop(1, CONFIG.COLORS.PIPE);
                 
-                // Верхняя труба
                 ctx.fillStyle = gradientTop;
                 ctx.fillRect(pipe.x, 0, CONFIG.PIPES.WIDTH, pipe.topHeight);
                 
@@ -647,7 +899,6 @@
                 ctx.arc(pipe.x + CONFIG.PIPES.WIDTH / 2, pipe.topHeight - 25, 5, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Нижняя труба
                 ctx.fillStyle = gradientTop;
                 ctx.fillRect(pipe.x, pipe.bottomY, CONFIG.PIPES.WIDTH, CONFIG.CANVAS_HEIGHT - pipe.bottomY);
                 
@@ -666,34 +917,25 @@
             });
         }
 
-        // Отрисовка подарков
         function drawGifts() {
             gifts.forEach(gift => {
                 ctx.save();
                 ctx.translate(gift.x, gift.y);
                 
-                // Покачивание
                 const wobble = Math.sin(frameCount * 0.1 + gift.x) * 5;
                 ctx.rotate(Math.sin(frameCount * 0.05) * 0.1);
                 
-                // Свечение
                 ctx.shadowColor = '#ffd700';
                 ctx.shadowBlur = 15 + Math.sin(frameCount * 0.1) * 5;
                 
-                // Коробка подарка
                 const size = CONFIG.GIFTS.SIZE;
                 ctx.fillStyle = '#e74c3c';
                 ctx.fillRect(-size/2, -size/2 + wobble, size, size);
                 
-                // Лента вертикальная
                 ctx.fillStyle = '#f1c40f';
                 ctx.fillRect(-4, -size/2 + wobble, 8, size);
-                
-                // Лента горизонтальная
                 ctx.fillRect(-size/2, -4 + wobble, size, 8);
                 
-                // Бантик
-                ctx.fillStyle = '#f1c40f';
                 ctx.beginPath();
                 ctx.ellipse(-8, -size/2 - 5 + wobble, 8, 6, -0.3, 0, Math.PI * 2);
                 ctx.fill();
@@ -706,7 +948,6 @@
             });
         }
 
-        // Частицы при сборе подарка
         function drawGiftParticles() {
             giftParticles.forEach((p, index) => {
                 ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
@@ -716,7 +957,7 @@
 
                 p.x += p.vx;
                 p.y += p.vy;
-                p.vy += 0.1; // гравитация
+                p.vy += 0.1;
                 p.alpha -= 0.02;
 
                 if (p.alpha <= 0) {
@@ -726,13 +967,13 @@
         }
 
         function createGiftExplosion(x, y) {
-            const colors = ['255, 215, 0', '241, 196, 15', '231, 76, 60', '46, 204, 113'];
-            for (let i = 0; i < 20; i++) {
+            const colors = ['255, 215, 0', '241, 196, 15', '231, 76, 60', '46, 204, 113', '0, 255, 255'];
+            for (let i = 0; i < 25; i++) {
                 giftParticles.push({
                     x: x,
                     y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8 - 3,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 3,
                     size: Math.random() * 6 + 3,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     alpha: 1
@@ -788,6 +1029,38 @@
             }
         }
 
+        function updateDifficulty() {
+            // Увеличиваем скорость
+            if (speedMultiplier < CONFIG.DIFFICULTY.MAX_SPEED_MULTIPLIER) {
+                speedMultiplier += CONFIG.DIFFICULTY.SPEED_INCREASE;
+            }
+
+            // Уменьшаем зазор
+            if (currentGap > CONFIG.DIFFICULTY.MIN_GAP) {
+                currentGap -= CONFIG.DIFFICULTY.GAP_DECREASE * 0.01;
+            }
+
+            // Обновляем индикатор
+            speedIndicator.textContent = `⚡ x${speedMultiplier.toFixed(1)}`;
+        }
+
+        function updateShield() {
+            if (shieldActive) {
+                shieldTimer--;
+                if (shieldTimer <= 0) {
+                    shieldActive = false;
+                    shieldIndicator.classList.remove('active');
+                }
+            }
+        }
+
+        function activateShield() {
+            shieldActive = true;
+            shieldTimer = CONFIG.GIFTS.SHIELD_DURATION;
+            shieldIndicator.classList.add('active');
+            sound.play('shield');
+        }
+
         function updatePlayer() {
             player.velocity += CONFIG.PLAYER.GRAVITY;
             player.velocity = Math.min(player.velocity, CONFIG.PLAYER.MAX_VELOCITY);
@@ -801,36 +1074,41 @@
             }
 
             if (player.y > CONFIG.CANVAS_HEIGHT - 80) {
-                gameOver();
+                if (!shieldActive) {
+                    gameOver();
+                } else {
+                    player.y = CONFIG.CANVAS_HEIGHT - 80;
+                    player.velocity = CONFIG.PLAYER.JUMP_FORCE;
+                }
             }
         }
 
         function updatePipes() {
-            if (frameCount % CONFIG.PIPES.SPAWN_RATE === 0) {
+            const currentSpeed = CONFIG.PIPES.BASE_SPEED * speedMultiplier;
+
+            if (frameCount % Math.floor(CONFIG.PIPES.SPAWN_RATE / speedMultiplier) === 0) {
                 const minTop = CONFIG.PIPES.MIN_HEIGHT;
-                const maxTop = CONFIG.CANVAS_HEIGHT - CONFIG.PIPES.GAP - CONFIG.PIPES.MIN_HEIGHT - 80;
+                const maxTop = CONFIG.CANVAS_HEIGHT - currentGap - CONFIG.PIPES.MIN_HEIGHT - 80;
                 const topHeight = Math.random() * (maxTop - minTop) + minTop;
 
                 pipes.push({
                     x: CONFIG.CANVAS_WIDTH,
                     topHeight: topHeight,
-                    bottomY: topHeight + CONFIG.PIPES.GAP,
+                    bottomY: topHeight + currentGap,
                     passed: false
                 });
 
-                // Спавн подарка
                 if (Math.random() < CONFIG.GIFTS.SPAWN_CHANCE) {
-                    const giftY = topHeight + CONFIG.PIPES.GAP / 2;
                     gifts.push({
                         x: CONFIG.CANVAS_WIDTH + 50,
-                        y: giftY,
+                        y: topHeight + currentGap / 2,
                         collected: false
                     });
                 }
             }
 
             pipes.forEach((pipe, index) => {
-                pipe.x -= CONFIG.PIPES.SPEED;
+                pipe.x -= currentSpeed;
 
                 if (!pipe.passed && pipe.x + CONFIG.PIPES.WIDTH < player.x) {
                     pipe.passed = true;
@@ -844,7 +1122,9 @@
                 }
 
                 if (checkCollision(pipe)) {
-                    gameOver();
+                    if (!shieldActive) {
+                        gameOver();
+                    }
                 }
 
                 if (pipe.x + CONFIG.PIPES.WIDTH < 0) {
@@ -854,10 +1134,11 @@
         }
 
         function updateGifts() {
-            gifts.forEach((gift, index) => {
-                gift.x -= CONFIG.PIPES.SPEED;
+            const currentSpeed = CONFIG.PIPES.BASE_SPEED * speedMultiplier;
 
-                // Проверка сбора подарка
+            gifts.forEach((gift, index) => {
+                gift.x -= currentSpeed;
+
                 if (!gift.collected) {
                     const dx = player.x - gift.x;
                     const dy = player.y - gift.y;
@@ -871,7 +1152,7 @@
                         giftCounter.textContent = `🎁 ${giftsCollected}`;
                         
                         createGiftExplosion(gift.x, gift.y);
-                        sound.play('gift');
+                        activateShield();
 
                         if (tg?.HapticFeedback) {
                             tg.HapticFeedback.impactOccurred('medium');
@@ -912,21 +1193,26 @@
             createExplosion(player.x, player.y);
             sound.play('crash');
 
-            if (score > bestScore) {
+            const isNewRecord = score > bestScore;
+            if (isNewRecord) {
                 bestScore = score;
                 localStorage.setItem('aviationBestScore', bestScore);
+                newRecordEl.classList.remove('hidden');
+            } else {
+                newRecordEl.classList.add('hidden');
             }
 
-            // Добавляем в таблицу лидеров
-            if (leaderboard.isHighScore(score)) {
-                leaderboard.add(playerName, score, giftsCollected);
-            }
+            // Отправляем в глобальный лидерборд
+            globalLeaderboard.submitScore(playerName, score, score, giftsCollected, oderId);
 
             finalScoreEl.textContent = `Счёт: ${score}`;
             giftsCollectedEl.textContent = `🎁 Подарков: ${giftsCollected}`;
             bestScoreEl.textContent = `Лучший: ${bestScore}`;
             
-            leaderboard.render('gameOverLeaderboard', score);
+            setTimeout(() => {
+                globalLeaderboard.render('gameOverLeaderboard', score, playerName);
+            }, 500);
+            
             gameOverMenu.classList.remove('hidden');
 
             if (navigator.vibrate) {
@@ -950,11 +1236,18 @@
             trails = [];
             sparkles = [];
             giftParticles = [];
+            shieldParticles = [];
             score = 0;
             giftsCollected = 0;
             frameCount = 0;
+            speedMultiplier = 1.0;
+            currentGap = CONFIG.PIPES.GAP;
+            shieldActive = false;
+            shieldTimer = 0;
             scoreDisplay.textContent = '0';
             giftCounter.textContent = '🎁 0';
+            speedIndicator.textContent = '⚡ x1.0';
+            shieldIndicator.classList.remove('active');
         }
 
         function startGame() {
@@ -965,11 +1258,17 @@
             gameOverMenu.classList.add('hidden');
         }
 
-        function showMenu() {
-            gameState = 'menu';
-            startMenu.classList.remove('hidden');
-            gameOverMenu.classList.add('hidden');
-            leaderboard.render('leaderboardList');
+        function shareScore() {
+            const text = `🎅 Я набрал ${score} очков в Santa Flight!\n🎁 Собрал ${giftsCollected} подарков!\nПопробуй побить мой рекорд!`;
+            
+            if (tg) {
+                tg.shareMessage(text);
+            } else if (navigator.share) {
+                navigator.share({ text: text });
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Результат скопирован!');
+            }
         }
 
         // ==========================================
@@ -982,6 +1281,7 @@
             drawPipes();
             drawGifts();
             drawGiftParticles();
+            drawShieldParticles();
             drawSparkles();
             drawPlayer();
             drawParticles();
@@ -990,6 +1290,8 @@
                 updatePlayer();
                 updatePipes();
                 updateGifts();
+                updateDifficulty();
+                updateShield();
                 frameCount++;
             } else {
                 frameCount++;
@@ -1023,7 +1325,7 @@
 
         document.getElementById('startBtn').addEventListener('click', startGame);
         document.getElementById('restartBtn').addEventListener('click', startGame);
-        document.getElementById('menuBtn').addEventListener('click', showMenu);
+        document.getElementById('shareBtn').addEventListener('click', shareScore);
 
         soundToggle.addEventListener('click', () => {
             sound.init();
@@ -1031,10 +1333,46 @@
             soundToggle.textContent = enabled ? '🔊' : '🔇';
         });
 
+        // Табы лидерборда
+        document.getElementById('tabGlobal').addEventListener('click', () => {
+            showLocalLeaderboard = false;
+            document.getElementById('tabGlobal').classList.add('active');
+            document.getElementById('tabLocal').classList.remove('active');
+            document.getElementById('leaderboardBadge').textContent = 'GLOBAL';
+            globalLeaderboard.render('leaderboardList');
+        });
+
+        document.getElementById('tabLocal').addEventListener('click', () => {
+            showLocalLeaderboard = true;
+            document.getElementById('tabLocal').classList.add('active');
+            document.getElementById('tabGlobal').classList.remove('active');
+            document.getElementById('leaderboardBadge').textContent = 'LOCAL';
+            renderLocalLeaderboard();
+        });
+
+        function renderLocalLeaderboard() {
+            const container = document.getElementById('leaderboardList');
+            const scores = globalLeaderboard.getLocalScores();
+            
+            if (scores.length === 0) {
+                container.innerHTML = '<div class="leaderboard-loading">Пока нет результатов</div>';
+                return;
+            }
+
+            const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7', '8', '9', '10'];
+            container.innerHTML = scores.slice(0, 10).map((entry, index) => `
+                <div class="leaderboard-item">
+                    <span class="leaderboard-rank">${medals[index]}</span>
+                    <span class="leaderboard-name">${entry.player_name || 'Игрок'}</span>
+                    <span class="leaderboard-score">${entry.score}</span>
+                </div>
+            `).join('');
+        }
+
         // Инициализация
         soundToggle.textContent = sound.enabled ? '🔊' : '🔇';
         bestScoreEl.textContent = `Лучший: ${bestScore}`;
-        leaderboard.render('leaderboardList');
+        globalLeaderboard.render('leaderboardList');
         gameLoop();
     </script>
 </body>
