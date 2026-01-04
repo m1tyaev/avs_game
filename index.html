@@ -26,6 +26,7 @@
             --text-tertiary: #5a6380;
             --border-color: rgba(255, 255, 255, 0.08);
             --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --safe-top: 60px;
         }
 
         * {
@@ -77,7 +78,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            padding: 20px;
+            padding: calc(var(--safe-top) + 10px) 20px 20px;
             pointer-events: none;
             z-index: 10;
             opacity: 0;
@@ -218,7 +219,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 30px 20px 20px;
+            padding: calc(var(--safe-top) + 20px) 20px 20px;
             height: 100%;
         }
 
@@ -384,7 +385,7 @@
         .screen-header {
             display: flex;
             align-items: center;
-            padding: 20px 20px 16px;
+            padding: calc(var(--safe-top) + 10px) 20px 16px;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -963,9 +964,22 @@
         // ==========================================
         let tg = window.Telegram?.WebApp;
         let playerName = 'Пилот';
+        let safeAreaTop = 60;
+        
         if (tg) {
             tg.ready();
             tg.expand();
+            
+            // Получаем safe area от Telegram
+            if (tg.safeAreaInset) {
+                safeAreaTop = tg.safeAreaInset.top || 60;
+            }
+            if (tg.contentSafeAreaInset) {
+                safeAreaTop = Math.max(safeAreaTop, tg.contentSafeAreaInset.top || 0);
+            }
+            
+            // Применяем отступы
+            document.documentElement.style.setProperty('--safe-top', safeAreaTop + 'px');
             
             if (tg.initDataUnsafe?.user) {
                 const user = tg.initDataUnsafe.user;
@@ -1188,7 +1202,7 @@
         }
 
         function reset() {
-            player = { x: CONFIG.PLAYER.X, y: H / 2, v: 0, rot: 0 };
+            player = { x: CONFIG.PLAYER.X, y: (H + safeAreaTop) / 2, v: 0, rot: 0 };
             pipes = []; giftsArr = []; particles = []; trails = [];
             score = 0; gifts = 0; frameCount = 0;
             speedMult = 1.0; currentGap = CONFIG.PIPES.GAP;
@@ -1402,7 +1416,8 @@
             player.y += player.v;
             player.rot = Math.min(Math.max(player.v * 0.06, -0.4), 0.6);
 
-            if (player.y < 25) { player.y = 25; player.v = 0; }
+            const topLimit = safeAreaTop + 30;
+            if (player.y < topLimit) { player.y = topLimit; player.v = 0; }
             if (player.y > H - 60) {
                 if (!shieldActive) gameOver();
                 else { player.y = H - 60; player.v = CONFIG.PLAYER.JUMP; }
@@ -1414,7 +1429,7 @@
             const spawnRate = Math.floor(CONFIG.PIPES.SPAWN / speedMult);
 
             if (frameCount % spawnRate === 0) {
-                const minT = CONFIG.PIPES.MIN_H;
+                const minT = safeAreaTop + CONFIG.PIPES.MIN_H;
                 const maxT = H - currentGap - CONFIG.PIPES.MIN_H - 60;
                 const top = Math.random() * (maxT - minT) + minT;
                 pipes.push({ x: W, top, bot: top + currentGap, passed: false });
