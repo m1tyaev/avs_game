@@ -536,6 +536,19 @@
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
         }
+        
+        @keyframes screenFlash {
+            0% { opacity: 0.4; }
+            100% { opacity: 0; }
+        }
+        
+        @keyframes rfqComplete {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            40% { transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
 
         /* Rarity colors */
         .rarity-common { background: #6b7280; }
@@ -741,7 +754,7 @@
 
         const CONFIG = {
             PLAYER: { X: 80, SIZE: 40, JUMP: -9, GRAVITY: 0.4, MAX_V: 12 },
-            OBSTACLES: { WIDTH: 60, GAP: 200, SPEED: 3.5, SPAWN: 120, MIN_H: 100 },
+            OBSTACLES: { WIDTH: 65, GAP: 220, SPEED: 3.5, SPAWN: 130, MIN_H: 100 },
             PARTS: { SIZE: 40, SPAWN_RATE: 60 },
             DIFFICULTY: { SPEED_INC: 0.0003, MAX_SPEED: 2.5 }
         };
@@ -1053,9 +1066,9 @@
             obstacles.forEach((o, i) => {
                 o.x -= sp;
 
-                // Collision
-                if (!o.passed && player.x + 30 > o.x && player.x - 30 < o.x + CONFIG.OBSTACLES.WIDTH) {
-                    if (player.y - 20 < o.top || player.y + 20 > o.bottom) {
+                // Collision (hitbox подогнан под новый самолёт)
+                if (!o.passed && player.x + 35 > o.x && player.x - 40 < o.x + CONFIG.OBSTACLES.WIDTH) {
+                    if (player.y - 25 < o.top || player.y + 25 > o.bottom) {
                         gameOver();
                     }
                 }
@@ -1086,6 +1099,15 @@
                     const dy = player.y - p.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
+                    // Притягивание к самолёту (магнит)
+                    const magnetRange = 80;
+                    if (dist < magnetRange && dist > 45) {
+                        const force = (magnetRange - dist) / magnetRange * 0.15;
+                        p.x += dx * force;
+                        p.y += dy * force;
+                    }
+
+                    // Сбор
                     if (dist < 45) {
                         p.collected = true;
                         money += p.value;
@@ -1094,6 +1116,11 @@
                         if (currentRfq && rfqProgress[p.name] !== undefined) {
                             rfqProgress[p.name]++;
                             updateHudRfq();
+                            
+                            // Проверяем завершение RFQ
+                            if (checkRfqComplete()) {
+                                showRfqCompletePopup();
+                            }
                         }
 
                         document.getElementById('hudMoney').textContent = money.toLocaleString();
@@ -1102,20 +1129,35 @@
                         // Popup
                         showPartPopup(p);
 
-                        // Particles
-                        for (let j = 0; j < 8; j++) {
+                        // Particles (больше для редких)
+                        const particleCount = {
+                            common: 6,
+                            uncommon: 10,
+                            rare: 15,
+                            epic: 20,
+                            legendary: 30
+                        };
+                        
+                        for (let j = 0; j < particleCount[p.rarity]; j++) {
+                            const angle = (j / particleCount[p.rarity]) * Math.PI * 2;
+                            const speed = 3 + Math.random() * 4;
                             particles.push({
                                 x: p.x, y: p.y,
-                                vx: (Math.random() - 0.5) * 6,
-                                vy: (Math.random() - 0.5) * 6,
-                                size: Math.random() * 4 + 2,
+                                vx: Math.cos(angle) * speed,
+                                vy: Math.sin(angle) * speed,
+                                size: 2 + Math.random() * 4,
                                 color: getRarityColor(p.rarity),
-                                life: 1
+                                life: 0.8 + Math.random() * 0.4
                             });
                         }
 
-                        if (p.rarity === 'legendary' || p.rarity === 'epic') {
+                        if (p.rarity === 'legendary') {
+                            vibrate('heavy');
+                            // Экранная вспышка для legendary
+                            showScreenFlash('#f0b90b');
+                        } else if (p.rarity === 'epic') {
                             vibrate('success');
+                            showScreenFlash('#9b59b6');
                         } else {
                             vibrate('light');
                         }
@@ -1126,6 +1168,44 @@
                     parts.splice(i, 1);
                 }
             });
+        }
+        
+        function showRfqCompletePopup() {
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(46, 204, 113, 0.9);
+                padding: 20px 40px;
+                border-radius: 16px;
+                font-size: 18px;
+                font-weight: 700;
+                color: white;
+                z-index: 100;
+                animation: rfqComplete 2s ease-out forwards;
+            `;
+            popup.innerHTML = '✅ RFQ ВЫПОЛНЕН!';
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 2000);
+            vibrate('success');
+        }
+        
+        function showScreenFlash(color) {
+            const flash = document.createElement('div');
+            flash.style.cssText = `
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background: ${color};
+                opacity: 0.3;
+                pointer-events: none;
+                z-index: 50;
+                animation: screenFlash 0.3s ease-out forwards;
+            `;
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 300);
         }
 
         function updateDifficulty() {
@@ -1153,124 +1233,429 @@
         // DRAW
         // ==========================================
         function drawBg() {
-            // Sky gradient
-            const grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, '#1a1a2e');
-            grad.addColorStop(0.5, '#16213e');
-            grad.addColorStop(1, '#0f3460');
-            ctx.fillStyle = grad;
+            // Градиент неба (закат/рассвет)
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+            skyGrad.addColorStop(0, '#0a0a1a');
+            skyGrad.addColorStop(0.3, '#1a1a3a');
+            skyGrad.addColorStop(0.6, '#2a3a5a');
+            skyGrad.addColorStop(0.85, '#3a5a7a');
+            skyGrad.addColorStop(1, '#1a3a5a');
+            ctx.fillStyle = skyGrad;
             ctx.fillRect(0, 0, W, H);
 
-            // Stars
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            for (let i = 0; i < 50; i++) {
-                const x = (i * 73 + frameCount * 0.1) % W;
-                const y = (i * 47) % (H * 0.6);
+            // Звёзды (мерцающие)
+            for (let i = 0; i < 80; i++) {
+                const x = (i * 73 + frameCount * 0.05) % W;
+                const y = (i * 47) % (H * 0.5);
+                const twinkle = Math.sin(frameCount * 0.05 + i) * 0.3 + 0.7;
+                ctx.fillStyle = `rgba(255,255,255,${twinkle * 0.5})`;
                 ctx.beginPath();
-                ctx.arc(x, y, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+                ctx.arc(x, y, Math.random() + 0.5, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // Clouds
-            ctx.fillStyle = 'rgba(255,255,255,0.05)';
-            for (let i = 0; i < 5; i++) {
-                const x = ((i * 200 - frameCount * 0.5) % (W + 200)) - 100;
-                const y = 100 + i * 80;
+            // Луна
+            ctx.fillStyle = 'rgba(255,255,230,0.9)';
+            ctx.shadowColor = 'rgba(255,255,200,0.5)';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(W - 80, 100, 35, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Кратеры на луне
+            ctx.fillStyle = 'rgba(200,200,180,0.3)';
+            ctx.beginPath();
+            ctx.arc(W - 90, 95, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(W - 70, 110, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Облака (несколько слоёв)
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            for (let i = 0; i < 6; i++) {
+                const x = ((i * 250 - frameCount * 0.3) % (W + 300)) - 150;
+                const y = 120 + i * 60 + Math.sin(i) * 30;
                 ctx.beginPath();
-                ctx.ellipse(x, y, 80, 30, 0, 0, Math.PI * 2);
+                ctx.ellipse(x, y, 100 + i * 20, 25 + i * 5, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + 60, y - 10, 70, 20, 0, 0, Math.PI * 2);
+                ctx.ellipse(x - 50, y + 5, 60, 18, 0, 0, Math.PI * 2);
                 ctx.fill();
+            }
+
+            // Горы вдалеке
+            ctx.fillStyle = 'rgba(30,50,80,0.5)';
+            ctx.beginPath();
+            ctx.moveTo(0, H - 80);
+            for (let x = 0; x <= W; x += 60) {
+                const h = 40 + Math.sin(x * 0.01) * 30 + Math.sin(x * 0.02) * 20;
+                ctx.lineTo(x, H - 80 - h);
+            }
+            ctx.lineTo(W, H - 80);
+            ctx.closePath();
+            ctx.fill();
+
+            // Земля/ВПП
+            const groundGrad = ctx.createLinearGradient(0, H - 60, 0, H);
+            groundGrad.addColorStop(0, '#1a2a3a');
+            groundGrad.addColorStop(1, '#0a1a2a');
+            ctx.fillStyle = groundGrad;
+            ctx.fillRect(0, H - 60, W, 60);
+
+            // Разметка ВПП
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            const runwayOffset = (frameCount * 3 * speedMult) % 80;
+            for (let x = -runwayOffset; x < W + 80; x += 80) {
+                ctx.fillRect(x, H - 35, 40, 6);
+            }
+
+            // Боковые огни ВПП
+            ctx.fillStyle = '#4a6cf7';
+            for (let x = -runwayOffset/2; x < W + 40; x += 40) {
+                ctx.shadowColor = '#4a6cf7';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(x, H - 55, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x, H - 15, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+
+            // Огни приближения (жёлтые)
+            if (Math.floor(frameCount / 15) % 2 === 0) {
+                ctx.fillStyle = '#f0b90b';
+                ctx.shadowColor = '#f0b90b';
+                ctx.shadowBlur = 12;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(50 + i * 30, H - 35, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
             }
         }
 
         function drawPlayer() {
             ctx.save();
             ctx.translate(player.x, player.y);
-            ctx.rotate(player.rot);
+            
+            // Плавное покачивание
+            const wobble = Math.sin(frameCount * 0.08) * 3;
+            const tilt = Math.sin(frameCount * 0.05) * 0.05;
+            ctx.rotate(player.rot + tilt);
+            ctx.translate(0, wobble);
 
-            // Glow
+            // Тень под самолётом
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(5, 25, 30, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ===== ДВИГАТЕЛЬ (пламя) =====
+            const flameLen = 25 + Math.random() * 15 + Math.sin(frameCount * 0.3) * 5;
+            const flameWidth = 8 + Math.random() * 4;
+            
+            // Внешнее пламя (оранжевое)
+            const flameGrad = ctx.createLinearGradient(-30, 0, -30 - flameLen, 0);
+            flameGrad.addColorStop(0, 'rgba(255,200,50,0.9)');
+            flameGrad.addColorStop(0.3, 'rgba(255,100,20,0.7)');
+            flameGrad.addColorStop(1, 'rgba(255,50,0,0)');
+            ctx.fillStyle = flameGrad;
+            ctx.beginPath();
+            ctx.moveTo(-30, -flameWidth/2);
+            ctx.quadraticCurveTo(-30 - flameLen/2, 0, -30 - flameLen, 0);
+            ctx.quadraticCurveTo(-30 - flameLen/2, 0, -30, flameWidth/2);
+            ctx.fill();
+            
+            // Внутреннее пламя (голубое, горячее)
+            const innerFlameLen = flameLen * 0.5;
+            const innerGrad = ctx.createLinearGradient(-30, 0, -30 - innerFlameLen, 0);
+            innerGrad.addColorStop(0, 'rgba(150,200,255,0.9)');
+            innerGrad.addColorStop(1, 'rgba(100,150,255,0)');
+            ctx.fillStyle = innerGrad;
+            ctx.beginPath();
+            ctx.moveTo(-30, -3);
+            ctx.quadraticCurveTo(-30 - innerFlameLen/2, 0, -30 - innerFlameLen, 0);
+            ctx.quadraticCurveTo(-30 - innerFlameLen/2, 0, -30, 3);
+            ctx.fill();
+
+            // ===== КОРПУС САМОЛЁТА =====
+            // Основной корпус (фюзеляж)
             ctx.shadowColor = '#4a6cf7';
-            ctx.shadowBlur = 20;
-
-            // Body
-            ctx.fillStyle = '#e8e8e8';
+            ctx.shadowBlur = 15;
+            
+            const bodyGrad = ctx.createLinearGradient(0, -15, 0, 15);
+            bodyGrad.addColorStop(0, '#ffffff');
+            bodyGrad.addColorStop(0.3, '#e8e8e8');
+            bodyGrad.addColorStop(0.7, '#c0c0c0');
+            bodyGrad.addColorStop(1, '#a0a0a0');
+            ctx.fillStyle = bodyGrad;
+            
             ctx.beginPath();
-            ctx.ellipse(0, 0, 25, 12, 0, 0, Math.PI * 2);
+            ctx.moveTo(35, 0);  // Нос
+            ctx.quadraticCurveTo(30, -8, 20, -10);
+            ctx.lineTo(-25, -8);
+            ctx.quadraticCurveTo(-32, -6, -32, 0);
+            ctx.quadraticCurveTo(-32, 6, -25, 8);
+            ctx.lineTo(20, 10);
+            ctx.quadraticCurveTo(30, 8, 35, 0);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+
+            // ===== КОКПИТ =====
+            const cockpitGrad = ctx.createLinearGradient(15, -8, 25, 2);
+            cockpitGrad.addColorStop(0, '#87CEEB');
+            cockpitGrad.addColorStop(0.5, '#4a6cf7');
+            cockpitGrad.addColorStop(1, '#1a3a8a');
+            ctx.fillStyle = cockpitGrad;
+            ctx.beginPath();
+            ctx.ellipse(22, -2, 10, 6, 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Блик на кокпите
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.ellipse(24, -4, 4, 2, 0.3, 0, Math.PI * 2);
             ctx.fill();
 
-            // Cockpit
-            ctx.fillStyle = '#4a6cf7';
+            // ===== КРЫЛЬЯ =====
+            // Верхнее крыло
+            const wingGrad = ctx.createLinearGradient(0, -30, 0, 0);
+            wingGrad.addColorStop(0, '#d0d0d0');
+            wingGrad.addColorStop(1, '#909090');
+            ctx.fillStyle = wingGrad;
+            
             ctx.beginPath();
-            ctx.ellipse(15, -2, 8, 6, 0.2, 0, Math.PI * 2);
+            ctx.moveTo(5, -5);
+            ctx.lineTo(-5, -28);
+            ctx.lineTo(-20, -30);
+            ctx.lineTo(-15, -28);
+            ctx.lineTo(0, -8);
+            ctx.lineTo(15, -5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Нижнее крыло
+            const wingGrad2 = ctx.createLinearGradient(0, 0, 0, 30);
+            wingGrad2.addColorStop(0, '#b0b0b0');
+            wingGrad2.addColorStop(1, '#808080');
+            ctx.fillStyle = wingGrad2;
+            
+            ctx.beginPath();
+            ctx.moveTo(5, 5);
+            ctx.lineTo(-5, 28);
+            ctx.lineTo(-20, 30);
+            ctx.lineTo(-15, 28);
+            ctx.lineTo(0, 8);
+            ctx.lineTo(15, 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Красные законцовки крыльев
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.ellipse(-17, -29, 4, 2, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-17, 29, 4, 2, 0.2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Wings
+            // ===== ХВОСТ =====
+            // Вертикальный стабилизатор
+            const tailGrad = ctx.createLinearGradient(-25, -20, -25, 0);
+            tailGrad.addColorStop(0, '#4a6cf7');
+            tailGrad.addColorStop(1, '#2a4cd7');
+            ctx.fillStyle = tailGrad;
+            
+            ctx.beginPath();
+            ctx.moveTo(-25, -5);
+            ctx.lineTo(-32, -22);
+            ctx.lineTo(-38, -20);
+            ctx.lineTo(-32, -5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Горизонтальный стабилизатор
             ctx.fillStyle = '#c0c0c0';
             ctx.beginPath();
-            ctx.moveTo(-5, 0);
-            ctx.lineTo(-15, -20);
-            ctx.lineTo(5, -20);
-            ctx.lineTo(5, 0);
+            ctx.moveTo(-28, 0);
+            ctx.lineTo(-35, -8);
+            ctx.lineTo(-40, -6);
+            ctx.lineTo(-35, 0);
+            ctx.lineTo(-40, 6);
+            ctx.lineTo(-35, 8);
+            ctx.closePath();
             ctx.fill();
 
+            // ===== ДВИГАТЕЛЬ (гондола) =====
+            ctx.fillStyle = '#606060';
             ctx.beginPath();
-            ctx.moveTo(-5, 0);
-            ctx.lineTo(-15, 20);
-            ctx.lineTo(5, 20);
-            ctx.lineTo(5, 0);
+            ctx.ellipse(-28, 0, 6, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#404040';
+            ctx.beginPath();
+            ctx.ellipse(-30, 0, 4, 4, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Tail
+            // ===== ЛОГОТИП (полоса) =====
             ctx.fillStyle = '#4a6cf7';
+            ctx.fillRect(-15, -3, 25, 2);
+            ctx.fillRect(-15, 1, 25, 2);
+
+            // ===== НАВИГАЦИОННЫЕ ОГНИ =====
+            // Мигающий красный на левом крыле
+            if (Math.floor(frameCount / 30) % 2 === 0) {
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(-17, -29, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Мигающий зелёный на правом крыле
+            if (Math.floor(frameCount / 30) % 2 === 0) {
+                ctx.fillStyle = '#00ff00';
+                ctx.shadowColor = '#00ff00';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(-17, 29, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Белый на хвосте (постоянный)
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 8;
             ctx.beginPath();
-            ctx.moveTo(-25, 0);
-            ctx.lineTo(-35, -12);
-            ctx.lineTo(-25, -10);
+            ctx.arc(-38, -18, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Engine trail
             ctx.shadowBlur = 0;
-            const trailLen = 15 + Math.random() * 10;
-            const trailGrad = ctx.createLinearGradient(-25, 0, -25 - trailLen, 0);
-            trailGrad.addColorStop(0, 'rgba(255,150,50,0.8)');
-            trailGrad.addColorStop(1, 'rgba(255,100,50,0)');
-            ctx.fillStyle = trailGrad;
-            ctx.beginPath();
-            ctx.moveTo(-25, -3);
-            ctx.lineTo(-25 - trailLen, 0);
-            ctx.lineTo(-25, 3);
-            ctx.fill();
-
             ctx.restore();
+            
+            // ===== СЛЕД ОТ ДВИГАТЕЛЯ (частицы) =====
+            if (gameState === 'playing' && frameCount % 2 === 0) {
+                const trailX = player.x - 45;
+                const trailY = player.y + wobble;
+                particles.push({
+                    x: trailX + Math.random() * 10,
+                    y: trailY + (Math.random() - 0.5) * 8,
+                    vx: -2 - Math.random() * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    size: 3 + Math.random() * 4,
+                    color: `rgba(255,${150 + Math.random() * 100},50,0.6)`,
+                    life: 0.5 + Math.random() * 0.3
+                });
+            }
         }
 
         function drawObstacles() {
             obstacles.forEach(o => {
-                // Gradient for 3D effect
-                const grad = ctx.createLinearGradient(o.x, 0, o.x + CONFIG.OBSTACLES.WIDTH, 0);
-                grad.addColorStop(0, '#2d4a6f');
-                grad.addColorStop(0.5, '#4a7caa');
-                grad.addColorStop(1, '#2d4a6f');
-
-                ctx.fillStyle = grad;
-
-                // Top obstacle
-                ctx.fillRect(o.x, 0, CONFIG.OBSTACLES.WIDTH, o.top);
-                // Bottom obstacle
-                ctx.fillRect(o.x, o.bottom, CONFIG.OBSTACLES.WIDTH, H - o.bottom);
-
-                // Caps
-                ctx.fillStyle = '#5a9fd4';
-                ctx.fillRect(o.x - 5, o.top - 20, CONFIG.OBSTACLES.WIDTH + 10, 20);
-                ctx.fillRect(o.x - 5, o.bottom, CONFIG.OBSTACLES.WIDTH + 10, 20);
-
-                // Warning lights
+                const w = CONFIG.OBSTACLES.WIDTH;
+                
+                // ===== ВЕРХНЕЕ ПРЕПЯТСТВИЕ (башня сверху) =====
+                // Основная башня
+                const topGrad = ctx.createLinearGradient(o.x, 0, o.x + w, 0);
+                topGrad.addColorStop(0, '#1a3a5c');
+                topGrad.addColorStop(0.3, '#2a5a8c');
+                topGrad.addColorStop(0.7, '#2a5a8c');
+                topGrad.addColorStop(1, '#1a3a5c');
+                ctx.fillStyle = topGrad;
+                ctx.fillRect(o.x, 0, w, o.top);
+                
+                // Окна на башне
+                ctx.fillStyle = 'rgba(100,200,255,0.3)';
+                for (let y = 20; y < o.top - 30; y += 40) {
+                    for (let x = 8; x < w - 8; x += 20) {
+                        ctx.fillRect(o.x + x, y, 12, 25);
+                    }
+                }
+                
+                // Нижняя часть (расширение)
+                ctx.fillStyle = '#3a6a9c';
+                ctx.beginPath();
+                ctx.moveTo(o.x - 8, o.top);
+                ctx.lineTo(o.x - 8, o.top - 25);
+                ctx.lineTo(o.x, o.top - 35);
+                ctx.lineTo(o.x + w, o.top - 35);
+                ctx.lineTo(o.x + w + 8, o.top - 25);
+                ctx.lineTo(o.x + w + 8, o.top);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Антенна сверху
+                ctx.strokeStyle = '#5a8abc';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(o.x + w/2, 0);
+                ctx.lineTo(o.x + w/2, -15);
+                ctx.stroke();
+                
+                // Красный огонь на антенне (мигающий)
+                if (Math.floor(frameCount / 25) % 2 === 0) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(o.x + w/2, -15, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                // ===== НИЖНЕЕ ПРЕПЯТСТВИЕ (ангар/здание) =====
+                // Основное здание
+                const botGrad = ctx.createLinearGradient(o.x, o.bottom, o.x + w, o.bottom);
+                botGrad.addColorStop(0, '#2a4a6c');
+                botGrad.addColorStop(0.3, '#3a6a9c');
+                botGrad.addColorStop(0.7, '#3a6a9c');
+                botGrad.addColorStop(1, '#2a4a6c');
+                ctx.fillStyle = botGrad;
+                ctx.fillRect(o.x, o.bottom, w, H - o.bottom);
+                
+                // Крыша (треугольная)
+                ctx.fillStyle = '#4a7aac';
+                ctx.beginPath();
+                ctx.moveTo(o.x - 8, o.bottom + 25);
+                ctx.lineTo(o.x + w/2, o.bottom);
+                ctx.lineTo(o.x + w + 8, o.bottom + 25);
+                ctx.lineTo(o.x + w + 8, o.bottom + 30);
+                ctx.lineTo(o.x - 8, o.bottom + 30);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Большие ворота ангара
+                ctx.fillStyle = '#1a2a3c';
+                ctx.fillRect(o.x + 10, o.bottom + 35, w - 20, H - o.bottom - 45);
+                
+                // Линии на воротах
+                ctx.strokeStyle = '#3a5a7c';
+                ctx.lineWidth = 2;
+                for (let i = 1; i < 4; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(o.x + 10 + (w - 20) * i / 4, o.bottom + 35);
+                    ctx.lineTo(o.x + 10 + (w - 20) * i / 4, H);
+                    ctx.stroke();
+                }
+                
+                // Предупреждающие полосы
+                ctx.fillStyle = '#f0b90b';
+                ctx.fillRect(o.x - 8, o.bottom + 25, 6, 5);
+                ctx.fillRect(o.x + w + 2, o.bottom + 25, 6, 5);
+                
+                // Огни безопасности
                 ctx.fillStyle = '#ff4444';
+                ctx.shadowColor = '#ff4444';
+                ctx.shadowBlur = 10;
                 ctx.beginPath();
-                ctx.arc(o.x + CONFIG.OBSTACLES.WIDTH / 2, o.top - 10, 4, 0, Math.PI * 2);
+                ctx.arc(o.x + w/2, o.bottom + 5, 5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.beginPath();
-                ctx.arc(o.x + CONFIG.OBSTACLES.WIDTH / 2, o.bottom + 10, 4, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.shadowBlur = 0;
             });
         }
 
@@ -1280,40 +1665,91 @@
 
                 ctx.save();
                 ctx.translate(p.x, p.y);
+                
+                // Вращение для редких деталей
+                if (p.rarity === 'legendary' || p.rarity === 'epic') {
+                    ctx.rotate(frameCount * 0.02);
+                }
+                
+                // Пульсация
+                const pulse = 1 + Math.sin(frameCount * 0.1 + p.x) * 0.1;
+                ctx.scale(pulse, pulse);
 
-                // Glow based on rarity
+                // Внешнее свечение
+                const glowIntensity = {
+                    common: 0,
+                    uncommon: 15,
+                    rare: 25,
+                    epic: 35,
+                    legendary: 50
+                };
+                
                 const glowColors = {
                     common: 'rgba(150,150,150,0.3)',
-                    uncommon: 'rgba(46,204,113,0.4)',
-                    rare: 'rgba(74,108,247,0.5)',
-                    epic: 'rgba(155,89,182,0.6)',
-                    legendary: 'rgba(240,185,11,0.8)'
+                    uncommon: 'rgba(46,204,113,0.5)',
+                    rare: 'rgba(74,108,247,0.6)',
+                    epic: 'rgba(155,89,182,0.7)',
+                    legendary: 'rgba(240,185,11,1)'
                 };
 
-                ctx.shadowColor = glowColors[p.rarity];
-                ctx.shadowBlur = 15 + p.glow * 10;
+                // Кольца для legendary
+                if (p.rarity === 'legendary') {
+                    ctx.strokeStyle = 'rgba(240,185,11,0.3)';
+                    ctx.lineWidth = 2;
+                    const ringSize = 35 + Math.sin(frameCount * 0.05) * 5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, ringSize, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.strokeStyle = 'rgba(240,185,11,0.2)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, ringSize + 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
 
-                // Background circle
-                ctx.fillStyle = getRarityBg(p.rarity);
+                // Основное свечение
+                ctx.shadowColor = glowColors[p.rarity];
+                ctx.shadowBlur = glowIntensity[p.rarity] + p.glow * 10;
+
+                // Фоновый круг
+                const bgGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+                const baseColors = {
+                    common: ['#4a4a4a', '#2a2a2a'],
+                    uncommon: ['#27ae60', '#1e8449'],
+                    rare: ['#3498db', '#2980b9'],
+                    epic: ['#9b59b6', '#8e44ad'],
+                    legendary: ['#f39c12', '#d68910']
+                };
+                bgGrad.addColorStop(0, baseColors[p.rarity][0]);
+                bgGrad.addColorStop(1, baseColors[p.rarity][1]);
+                
+                ctx.fillStyle = bgGrad;
                 ctx.beginPath();
-                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.arc(0, 0, 24, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Icon
+                // Блик
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.beginPath();
+                ctx.ellipse(-8, -8, 8, 5, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Иконка
                 ctx.shadowBlur = 0;
-                ctx.font = '20px Arial';
+                ctx.font = '22px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(p.icon, 0, 0);
 
-                // Value label for rare+
-                if (p.rarity !== 'common') {
-                    ctx.font = 'bold 9px Inter';
-                    ctx.fillStyle = 'white';
-                    ctx.fillText('$' + formatMoney(p.value), 0, 32);
-                }
-
                 ctx.restore();
+
+                // Цена под деталью (для uncommon+)
+                if (p.rarity !== 'common') {
+                    ctx.font = 'bold 10px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = getRarityColor(p.rarity);
+                    ctx.fillText('$' + formatMoney(p.value), p.x, p.y + 35);
+                }
             });
         }
 
