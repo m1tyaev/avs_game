@@ -1195,11 +1195,11 @@
                 ctx.strokeStyle = `rgba(0, 212, 255, ${0.4 + Math.sin(frameCount * 0.1) * 0.2})`;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(0, bob, 48, 0, Math.PI * 2);
+                ctx.arc(0, bob, 52, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
-            if (playerImg.complete) ctx.drawImage(playerImg, -40, -32 + bob, 80, 64);
+            if (playerImg.complete) ctx.drawImage(playerImg, -44, -25 + bob, 88, 50);
             ctx.shadowBlur = 0;
             ctx.restore();
 
@@ -1395,8 +1395,8 @@
         }
 
         function collision(p) {
-            const pl = player.x - 28, pr = player.x + 28;
-            const pt = player.y - 22, pb = player.y + 22;
+            const pl = player.x - 35, pr = player.x + 35;
+            const pt = player.y - 18, pb = player.y + 18;
             if (pr > p.x && pl < p.x + CONFIG.PIPES.WIDTH) {
                 if (pt < p.top || pb > p.bot) return true;
             }
