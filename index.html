@@ -1096,8 +1096,21 @@
             }
         }
 
-        function vibrate(p) {
-            if (settings.vibration && navigator.vibrate) navigator.vibrate(p);
+        function vibrate(p, type = 'light') {
+            if (!settings.vibration) return;
+            
+            // Telegram HapticFeedback (лучше работает на iOS/Android)
+            if (tg?.HapticFeedback) {
+                if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+                else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+                else if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+                else if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
+                else if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+                else tg.HapticFeedback.impactOccurred('light');
+            }
+            
+            // Стандартная вибрация (fallback)
+            if (navigator.vibrate) navigator.vibrate(p);
         }
 
         // ==========================================
@@ -1133,7 +1146,7 @@
         function gameOver() {
             gameState = 'over';
             sound.play('crash');
-            vibrate([100, 50, 100]);
+            vibrate([100, 50, 100], 'error');
 
             stats.games++;
             stats.gifts += gifts;
@@ -1362,7 +1375,7 @@
                         $('hudGifts').textContent = '🎁 ' + gifts;
                         giftExplosion(g.x, g.y);
                         activateShield();
-                        vibrate([40, 20, 40]);
+                        vibrate([40, 20, 40], 'success');
                     }
                 }
                 if (g.x < -50 || g.col) giftsArr.splice(i, 1);
