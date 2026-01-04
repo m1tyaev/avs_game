@@ -905,8 +905,8 @@
         // ==========================================
         // CONFIG
         // ==========================================
-        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-        const SUPABASE_KEY = 'YOUR_ANON_KEY';
+        const SUPABASE_URL = 'https://imqoksswffkufknkbofm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltcW9rc3N3ZmZrdWZrbmtib2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzE2ODYsImV4cCI6MjA4MzA0NzY4Nn0.wcH5yZGRSzIkE0qjb_IIDSt3S-q3ylsBLJPT3Of-T78';
 
         let W = window.innerWidth;
         let H = window.innerHeight;
@@ -1038,7 +1038,7 @@
                 if (!this.enabled) return this.local();
                 if (Date.now() - this.lastFetch < 30000 && this.cache.length) return this.cache;
                 try {
-                    const r = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=10`,
+                    const r = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=50`,
                         { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
                     if (r.ok) { this.cache = await r.json(); this.lastFetch = Date.now(); return this.cache; }
                 } catch(e) {}
@@ -1048,19 +1048,48 @@
                 this.saveLocal(name, score, gifts);
                 if (!this.enabled) return;
                 try {
+                    // Сначала проверяем текущий лучший счёт игрока
+                    const check = await fetch(
+                        `${SUPABASE_URL}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(name)}&select=score`,
+                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+                    );
+                    const existing = await check.json();
+                    
+                    if (existing.length > 0 && existing[0].score >= score) {
+                        // Текущий счёт не лучше - не обновляем
+                        return;
+                    }
+                    
+                    // Upsert - вставляем или обновляем
                     await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
                         method: 'POST',
-                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                        headers: { 
+                            'apikey': SUPABASE_KEY, 
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json', 
+                            'Prefer': 'resolution=merge-duplicates'
+                        },
                         body: JSON.stringify({ player_name: name.substring(0, 50), score, gifts })
                     });
                     this.lastFetch = 0;
                 } catch(e) {}
             }
-            local() { return JSON.parse(localStorage.getItem('avsLB')) || []; }
+            local() { 
+                return JSON.parse(localStorage.getItem('avsLB')) || []; 
+            }
             saveLocal(name, score, gifts) {
-                const s = this.local();
-                s.push({ player_name: name, score, gifts });
+                let s = this.local();
+                // Ищем существующую запись игрока
+                const existing = s.find(e => e.player_name === name);
+                if (existing) {
+                    // Обновляем только если новый счёт выше
+                    if (score > existing.score) {
+                        existing.score = score;
+                        existing.gifts = gifts;
+                    }
+                } else {
+                    s.push({ player_name: name, score, gifts });
+                }
                 s.sort((a, b) => b.score - a.score);
                 localStorage.setItem('avsLB', JSON.stringify(s.slice(0, 20)));
             }
@@ -1069,7 +1098,18 @@
                 c.innerHTML = '<div class="lb-empty">Загрузка...</div>';
                 const data = await this.fetch();
                 if (!data.length) { c.innerHTML = '<div class="lb-empty">Пока нет результатов</div>'; return; }
-                c.innerHTML = data.slice(0, 10).map((e, i) => {
+                
+                // Оставляем только лучший результат каждого игрока
+                const bestScores = {};
+                data.forEach(e => {
+                    const name = e.player_name || 'Пилот';
+                    if (!bestScores[name] || e.score > bestScores[name].score) {
+                        bestScores[name] = e;
+                    }
+                });
+                const uniqueData = Object.values(bestScores).sort((a, b) => b.score - a.score);
+                
+                c.innerHTML = uniqueData.slice(0, 10).map((e, i) => {
                     const name = e.player_name || 'Пилот';
                     const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'default';
                     return `<div class="lb-item ${name === playerName ? 'highlight' : ''}">
@@ -1175,10 +1215,11 @@
             stats.games++;
             stats.gifts += gifts;
             const isRecord = score > stats.best;
-            if (isRecord) stats.best = score;
+            if (isRecord) {
+                stats.best = score;
+                lb.submit(playerName, score, gifts);
+            }
             localStorage.setItem('avsStats', JSON.stringify(stats));
-
-            lb.submit(playerName, score, gifts);
 
             $('goScore').textContent = score;
             $('goGifts').textContent = gifts;
@@ -1494,6 +1535,7 @@
             if (confirm('Сбросить весь прогресс?')) {
                 stats = { best: 0, gifts: 0, games: 0 };
                 localStorage.setItem('avsStats', JSON.stringify(stats));
+                localStorage.removeItem('avsLB');
                 updateStats();
                 alert('Прогресс сброшен');
             }
