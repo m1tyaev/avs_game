@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Santa Flight — Aviation Service</title>
+    <title>Aviation Parts Runner — Aviation Service</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0a0b14;
@@ -16,39 +16,26 @@
             --bg-card-hover: #222438;
             --accent-blue: #4a6cf7;
             --accent-blue-light: #6b8cff;
-            --accent-blue-dark: #3451d1;
             --accent-gold: #f0b90b;
             --accent-red: #e74c3c;
             --accent-green: #2ecc71;
             --accent-cyan: #00d4ff;
+            --accent-purple: #9b59b6;
+            --accent-orange: #e67e22;
             --text-primary: #ffffff;
             --text-secondary: #8892b0;
             --text-tertiary: #5a6380;
             --border-color: rgba(255, 255, 255, 0.08);
-            --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
             --safe-top: 100px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
-            margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
-            background: transparent;
-        }
-
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100%;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
             -webkit-font-smoothing: antialiased;
@@ -56,184 +43,136 @@
 
         .game-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-primary);
             overflow: hidden;
         }
 
         #gameCanvas {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 100%;
-            max-height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
         }
 
-        /* ============ HUD ============ */
+        /* HUD */
         .hud {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
-            padding: calc(var(--safe-top) + 10px) 20px 20px;
+            padding: calc(var(--safe-top) + 10px) 16px 16px;
             pointer-events: none;
             z-index: 10;
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.3s;
         }
-
         .hud.visible { opacity: 1; }
 
         .hud-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            gap: 10px;
         }
 
-        .hud-score {
-            text-align: center;
+        .hud-money {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-gold);
         }
 
-        .hud-score-value {
-            font-size: 52px;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        .hud-rfq {
+            flex: 1;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 12px;
+            max-width: 200px;
         }
 
-        .hud-score-label {
-            font-size: 11px;
-            color: var(--text-secondary);
+        .rfq-title {
+            font-size: 9px;
+            color: var(--accent-cyan);
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-top: 4px;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .rfq-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .rfq-item {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+        }
+        .rfq-item.collected {
+            background: var(--accent-green);
+            color: #000;
         }
 
         .hud-stats {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
             align-items: flex-end;
         }
 
         .hud-stat {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0,0,0,0.6);
             backdrop-filter: blur(10px);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 600;
             color: var(--text-primary);
         }
 
-        .hud-stat.gifts { color: var(--accent-gold); }
-        .hud-stat.speed { color: var(--accent-cyan); }
-
-        .shield-bar {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0, 212, 255, 0.15);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            padding: 8px 16px;
-            border-radius: 25px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .shield-bar.active { opacity: 1; }
-
-        .shield-bar-icon { font-size: 18px; }
-
-        .shield-bar-progress {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .shield-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue-light));
-            border-radius: 3px;
-            transition: width 0.1s linear;
-        }
-
-        .shield-bar-text {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--accent-cyan);
-        }
-
-        /* ============ SCREENS ============ */
+        /* Screens */
         .screen {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             display: flex;
             flex-direction: column;
             z-index: 20;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease;
-            overflow: hidden;
+            transition: opacity 0.3s;
+            overflow-y: auto;
         }
+        .screen.active { opacity: 1; pointer-events: auto; }
 
-        .screen.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* ============ MAIN MENU ============ */
+        /* Main Menu */
         .main-menu {
             background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
         }
 
-        .menu-bg-pattern {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a6cf7' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
-        }
-
         .menu-content {
-            position: relative;
-            z-index: 1;
+            padding: calc(var(--safe-top) + 10px) 20px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: calc(var(--safe-top) + 20px) 20px 20px;
-            height: 100%;
-        }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 12px;
+            min-height: 100%;
         }
 
         .logo-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
+            background: linear-gradient(135deg, var(--accent-blue), #3451d1);
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 10px;
@@ -241,19 +180,19 @@
             color: white;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .logo-title {
-            font-size: 28px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 900;
             color: var(--text-primary);
-            letter-spacing: -0.5px;
-            margin-bottom: 4px;
+            text-align: center;
+            line-height: 1.1;
         }
 
         .logo-subtitle {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--accent-blue);
             text-transform: uppercase;
@@ -261,50 +200,65 @@
             margin-top: 4px;
         }
 
-        .stats-row {
-            display: flex;
-            gap: 10px;
-            margin: 16px 0 20px;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: var(--bg-card);
+        .wallet-card {
+            width: 100%;
+            background: linear-gradient(135deg, #1a1c2e 0%, #222438 100%);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px 10px;
-            text-align: center;
-            transition: all 0.3s ease;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px 0;
         }
 
-        .stat-card:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--accent-blue);
-            transform: translateY(-2px);
+        .wallet-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
-        .stat-value {
-            font-size: 20px;
+        .wallet-amount {
+            font-size: 28px;
             font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 2px;
+            color: var(--accent-gold);
         }
 
-        .stat-value.gold { color: var(--accent-gold); }
+        .wallet-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
 
-        .stat-label {
+        .wallet-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .wallet-stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .wallet-stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .wallet-stat-label {
             font-size: 9px;
-            font-weight: 600;
             color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
 
         .menu-buttons {
+            width: 100%;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            width: 100%;
+            margin-top: 8px;
         }
 
         .btn {
@@ -320,386 +274,226 @@
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue-dark) 100%);
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #3451d1 100%);
             box-shadow: 0 8px 30px rgba(74, 108, 247, 0.35);
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(74, 108, 247, 0.45);
-        }
+        .btn-primary:active { transform: scale(0.98); }
 
         .btn-secondary {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
         }
 
-        .btn-secondary:hover {
-            background: var(--bg-card-hover);
-            border-color: rgba(255, 255, 255, 0.15);
+        .btn-aog {
+            background: linear-gradient(135deg, var(--accent-red) 0%, #c0392b 100%);
+            animation: aogPulse 2s ease-in-out infinite;
         }
 
-        .btn-ghost {
-            background: transparent;
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .btn:active {
-            transform: scale(0.98) !important;
-        }
-
-        .btn-icon {
-            font-size: 16px;
+        @keyframes aogPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(231, 76, 60, 0.2); }
         }
 
         .menu-footer {
             margin-top: auto;
+            padding-top: 20px;
             text-align: center;
-            padding-top: 10px;
-        }
-
-        .menu-footer-text {
             font-size: 10px;
             color: var(--text-tertiary);
         }
 
-        .menu-footer-link {
+        .menu-footer a {
             color: var(--accent-blue);
             text-decoration: none;
         }
 
-        /* ============ LEADERBOARD ============ */
-        .leaderboard-screen {
+        /* RFQ Screen */
+        .rfq-screen {
             background: var(--bg-primary);
         }
 
-        .screen-header {
+        .rfq-content {
+            padding: calc(var(--safe-top) + 10px) 20px 20px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            padding: calc(var(--safe-top) + 10px) 20px 16px;
-            border-bottom: 1px solid var(--border-color);
         }
 
-        .btn-back {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-back:hover {
-            background: var(--bg-card-hover);
-        }
-
-        .screen-title {
-            flex: 1;
+        .rfq-header {
             text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-right: 40px;
+            margin-bottom: 20px;
         }
 
-        .tabs-container {
-            padding: 16px 20px;
-        }
-
-        .tabs {
-            display: flex;
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 4px;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            background: var(--accent-blue);
-            color: var(--text-primary);
-        }
-
-        .leaderboard-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 20px 20px;
-        }
-
-        .lb-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-        }
-
-        .lb-item:hover {
-            background: var(--bg-card-hover);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .lb-item.highlight {
-            background: rgba(74, 108, 247, 0.1);
-            border-color: var(--accent-blue);
-        }
-
-        .lb-rank {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .rfq-header h2 {
             font-size: 14px;
-            font-weight: 700;
-            border-radius: 10px;
-            margin-right: 14px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
         }
 
-        .lb-rank.gold { background: linear-gradient(135deg, #f0b90b, #d4a00a); color: #000; }
-        .lb-rank.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); color: #000; }
-        .lb-rank.bronze { background: linear-gradient(135deg, #cd7f32, #b06c28); color: #fff; }
-        .lb-rank.default { background: var(--bg-secondary); color: var(--text-secondary); }
-
-        .lb-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-blue), #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            margin-right: 14px;
-        }
-
-        .lb-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .lb-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .lb-gifts {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            margin-top: 2px;
-        }
-
-        .lb-score {
-            font-size: 18px;
+        .rfq-header h1 {
+            font-size: 24px;
             font-weight: 800;
-            color: var(--accent-gold);
+            color: var(--text-primary);
         }
 
-        .lb-empty {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-tertiary);
+        .rfq-client {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
         }
 
-        /* ============ SETTINGS ============ */
-        .settings-screen {
-            background: var(--bg-primary);
+        .rfq-order {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
 
-        .settings-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .settings-section {
-            margin-bottom: 24px;
-        }
-
-        .settings-section-title {
+        .rfq-order-title {
             font-size: 11px;
-            font-weight: 700;
             color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             margin-bottom: 12px;
-            padding-left: 4px;
         }
 
-        .setting-item {
+        .rfq-parts {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rfq-part {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            margin-bottom: 10px;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
         }
 
-        .setting-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .setting-icon {
-            width: 44px;
-            height: 44px;
+        .rfq-part-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            font-size: 20px;
+            font-size: 18px;
         }
 
-        .setting-text h3 {
-            font-size: 14px;
+        .rfq-part-info {
+            flex: 1;
+        }
+
+        .rfq-part-name {
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 2px;
         }
 
-        .setting-text p {
-            font-size: 12px;
+        .rfq-part-rarity {
+            font-size: 10px;
             color: var(--text-tertiary);
         }
 
-        .toggle {
-            width: 52px;
-            height: 30px;
-            background: var(--bg-secondary);
-            border-radius: 15px;
-            cursor: pointer;
-            position: relative;
-            transition: background 0.3s;
+        .rfq-part-qty {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
         }
 
-        .toggle.active {
-            background: var(--accent-blue);
-        }
-
-        .toggle::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.3s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .toggle.active::after {
-            transform: translateX(22px);
-        }
-
-        .btn-danger {
+        .rfq-reward {
             width: 100%;
-            background: rgba(231, 76, 60, 0.1);
-            border: 1px solid rgba(231, 76, 60, 0.2);
-            color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(240,185,11,0.1) 0%, rgba(240,185,11,0.05) 100%);
+            border: 1px solid rgba(240,185,11,0.2);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .btn-danger:hover {
-            background: rgba(231, 76, 60, 0.2);
+        .rfq-reward-label {
+            font-size: 10px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* ============ GAME OVER ============ */
+        .rfq-reward-amount {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin-top: 4px;
+        }
+
+        /* Game Over */
         .gameover-screen {
-            background: linear-gradient(180deg, rgba(10, 11, 20, 0.97) 0%, rgba(18, 19, 31, 0.98) 100%);
+            background: linear-gradient(180deg, rgba(10,11,20,0.97), rgba(18,19,31,0.98));
             justify-content: center;
             align-items: center;
             padding: 30px;
         }
 
-        .gameover-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
+        .gameover-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
 
-        .gameover-score {
-            font-size: 72px;
+        .gameover-money {
+            font-size: 48px;
             font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-            text-shadow: 0 0 60px rgba(74, 108, 247, 0.4);
+            color: var(--accent-gold);
         }
 
         .gameover-label {
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 11px;
             color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 8px;
+            letter-spacing: 2px;
         }
 
-        .new-record-badge {
-            display: none;
+        .gameover-rfq {
             margin: 20px 0;
-            padding: 10px 24px;
-            background: linear-gradient(135deg, var(--accent-gold), #d4a00a);
-            border-radius: 25px;
-            font-size: 13px;
-            font-weight: 700;
-            color: #000;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            animation: recordPulse 1.5s ease-in-out infinite;
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-align: center;
         }
 
-        .new-record-badge.visible { display: block; }
-
-        @keyframes recordPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.4); }
-            50% { transform: scale(1.02); box-shadow: 0 0 30px 5px rgba(240, 185, 11, 0.2); }
+        .gameover-rfq.success {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.3);
         }
+
+        .gameover-rfq.failed {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .gameover-rfq-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .gameover-rfq.success .gameover-rfq-text { color: var(--accent-green); }
+        .gameover-rfq.failed .gameover-rfq-text { color: var(--accent-red); }
 
         .gameover-stats {
             display: flex;
             gap: 24px;
-            margin: 28px 0;
+            margin: 16px 0 24px;
         }
 
         .gameover-stat {
@@ -707,192 +501,203 @@
         }
 
         .gameover-stat-value {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-primary);
         }
 
         .gameover-stat-label {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .gameover-buttons {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             max-width: 260px;
-            margin-top: 20px;
         }
 
-        /* ============ SNOWFLAKES ============ */
-        .snowflakes-container {
+        /* Parts collected popup */
+        .part-popup {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             pointer-events: none;
-            overflow: hidden;
-            z-index: 5;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: partPopup 1s ease-out forwards;
+            z-index: 15;
         }
 
-        .snowflake {
+        @keyframes partPopup {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+
+        /* Rarity colors */
+        .rarity-common { background: #6b7280; }
+        .rarity-uncommon { background: var(--accent-green); }
+        .rarity-rare { background: var(--accent-blue); }
+        .rarity-epic { background: var(--accent-purple); }
+        .rarity-legendary { background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange)); }
+
+        .text-common { color: #9ca3af; }
+        .text-uncommon { color: var(--accent-green); }
+        .text-rare { color: var(--accent-blue-light); }
+        .text-epic { color: var(--accent-purple); }
+        .text-legendary { color: var(--accent-gold); }
+
+        /* Legendary alert */
+        .legendary-alert {
             position: absolute;
-            color: white;
-            opacity: 0.4;
-            animation: snowfall linear infinite;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px 30px;
+            text-align: center;
+            z-index: 25;
+            animation: legendaryPulse 0.5s ease-out;
+            display: none;
         }
 
-        @keyframes snowfall {
-            0% { transform: translateY(-10px) rotate(0deg); }
-            100% { transform: translateY(100vh) rotate(360deg); }
+        .legendary-alert.show { display: block; }
+
+        @keyframes legendaryPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .legendary-alert-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        .legendary-alert-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
         <canvas id="gameCanvas"></canvas>
-        
+
         <!-- HUD -->
         <div class="hud" id="hud">
             <div class="hud-top">
+                <div class="hud-money">💰 $<span id="hudMoney">0</span></div>
+                <div class="hud-rfq">
+                    <div class="rfq-title">📋 RFQ Заказ</div>
+                    <div class="rfq-items" id="hudRfq"></div>
+                </div>
                 <div class="hud-stats">
-                    <div class="hud-stat gifts" id="hudGifts">🎁 0</div>
-                    <div class="hud-stat speed" id="hudSpeed">⚡ x1.0</div>
+                    <div class="hud-stat" id="hudParts">📦 0</div>
+                    <div class="hud-stat" id="hudSpeed">⚡ x1.0</div>
                 </div>
-                <div class="hud-score">
-                    <div class="hud-score-value" id="hudScore">0</div>
-                    <div class="hud-score-label">Счёт</div>
-                </div>
-                <div style="width: 60px;"></div>
-            </div>
-            <div class="shield-bar" id="shieldBar">
-                <span class="shield-bar-icon">🛡️</span>
-                <div class="shield-bar-progress">
-                    <div class="shield-bar-fill" id="shieldFill"></div>
-                </div>
-                <span class="shield-bar-text">ЗАЩИТА</span>
             </div>
         </div>
 
-        <!-- Snowflakes -->
-        <div class="snowflakes-container" id="snowflakes"></div>
+        <!-- Legendary Alert -->
+        <div class="legendary-alert" id="legendaryAlert">
+            <div class="legendary-alert-icon">⭐</div>
+            <div class="legendary-alert-text">Legendary Part!</div>
+        </div>
 
-        <!-- MAIN MENU -->
+        <!-- Main Menu -->
         <div class="screen main-menu active" id="mainMenu">
-            <div class="menu-bg-pattern"></div>
             <div class="menu-content">
-                <div class="logo-section">
-                    <div class="logo-badge">🎄 Новогодняя игра</div>
-                    <div class="logo-title">Santa Flight</div>
-                    <div class="logo-subtitle">Aviation Service</div>
-                </div>
+                <div class="logo-badge">✈️ Aviation Game</div>
+                <div class="logo-title">Aviation Parts<br>Runner</div>
+                <div class="logo-subtitle">Aviation Service</div>
 
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-value gold" id="statBest">0</div>
-                        <div class="stat-label">Рекорд</div>
+                <div class="wallet-card">
+                    <div class="wallet-balance">
+                        <span style="font-size: 24px;">💰</span>
+                        <div>
+                            <div class="wallet-amount">$<span id="totalMoney">0</span></div>
+                            <div class="wallet-label">Всего заработано</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statGifts">0</div>
-                        <div class="stat-label">Подарков</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="statGames">0</div>
-                        <div class="stat-label">Игр</div>
+                    <div class="wallet-stats">
+                        <div class="wallet-stat">
+                            <div class="wallet-stat-value" id="totalRfq">0</div>
+                            <div class="wallet-stat-label">RFQ выполнено</div>
+                        </div>
+                        <div class="wallet-stat">
+                            <div class="wallet-stat-value" id="totalParts">0</div>
+                            <div class="wallet-stat-label">Деталей</div>
+                        </div>
+                        <div class="wallet-stat">
+                            <div class="wallet-stat-value" id="totalGames">0</div>
+                            <div class="wallet-stat-label">Полётов</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="menu-buttons">
-                    <button class="btn btn-primary" id="btnPlay">
-                        <span class="btn-icon">🚀</span> Начать полёт
-                    </button>
-                    <button class="btn btn-secondary" id="btnLeaderboard">
-                        <span class="btn-icon">🏆</span> Лидерборд
-                    </button>
-                    <button class="btn btn-ghost" id="btnSettings">
-                        <span class="btn-icon">⚙️</span> Настройки
-                    </button>
+                    <button class="btn btn-primary" id="btnPlay">🚀 Начать полёт</button>
+                    <button class="btn btn-secondary" id="btnLeaderboard">🏆 Лидерборд</button>
                 </div>
 
                 <div class="menu-footer">
-                    <p class="menu-footer-text">
-                        <a href="https://jet-avia.ru" target="_blank" class="menu-footer-link">jet-avia.ru</a> • v2.0
-                    </p>
+                    <a href="https://jet-avia.ru" target="_blank">jet-avia.ru</a> • v1.0
                 </div>
             </div>
         </div>
 
-        <!-- LEADERBOARD -->
-        <div class="screen leaderboard-screen" id="leaderboardScreen">
-            <div class="screen-header">
-                <button class="btn-back" id="lbBack">←</button>
-                <div class="screen-title">Лидерборд</div>
-            </div>
-            <div class="leaderboard-list" id="lbList">
-                <div class="lb-empty">Загрузка...</div>
-            </div>
-        </div>
-
-        <!-- SETTINGS -->
-        <div class="screen settings-screen" id="settingsScreen">
-            <div class="screen-header">
-                <button class="btn-back" id="settingsBack">←</button>
-                <div class="screen-title">Настройки</div>
-            </div>
-            <div class="settings-content">
-                <div class="settings-section">
-                    <div class="settings-section-title">Звук и вибрация</div>
-                    <div class="setting-item">
-                        <div class="setting-left">
-                            <div class="setting-icon">🔊</div>
-                            <div class="setting-text">
-                                <h3>Звуковые эффекты</h3>
-                                <p>Звуки в игре</p>
-                            </div>
-                        </div>
-                        <div class="toggle active" id="toggleSound"></div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-left">
-                            <div class="setting-icon">📳</div>
-                            <div class="setting-text">
-                                <h3>Вибрация</h3>
-                                <p>Тактильный отклик</p>
-                            </div>
-                        </div>
-                        <div class="toggle active" id="toggleVibration"></div>
-                    </div>
+        <!-- RFQ Screen -->
+        <div class="screen rfq-screen" id="rfqScreen">
+            <div class="rfq-content">
+                <div class="rfq-header">
+                    <h2>Новый заказ</h2>
+                    <h1>RFQ #<span id="rfqNumber">001</span></h1>
+                    <div class="rfq-client">Клиент: <span id="rfqClient">Airline Co.</span></div>
                 </div>
-                <div class="settings-section">
-                    <div class="settings-section-title">Данные</div>
-                    <button class="btn btn-danger" id="btnReset">🗑️ Сбросить прогресс</button>
+
+                <div class="rfq-order">
+                    <div class="rfq-order-title">Требуемые детали</div>
+                    <div class="rfq-parts" id="rfqParts"></div>
+                </div>
+
+                <div class="rfq-reward">
+                    <div class="rfq-reward-label">Награда за выполнение</div>
+                    <div class="rfq-reward-amount">+$<span id="rfqReward">0</span></div>
+                </div>
+
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" id="btnStartRfq">✈️ Принять заказ</button>
+                    <button class="btn btn-secondary" id="btnSkipRfq">⏭️ Пропустить</button>
                 </div>
             </div>
         </div>
 
-        <!-- GAME OVER -->
+        <!-- Game Over -->
         <div class="screen gameover-screen" id="gameoverScreen">
-            <div class="gameover-icon">💥</div>
-            <div class="gameover-score" id="goScore">0</div>
-            <div class="gameover-label">Очков набрано</div>
-            
-            <div class="new-record-badge" id="newRecordBadge">🎉 Новый рекорд!</div>
+            <div class="gameover-title">Полёт завершён</div>
+            <div class="gameover-money">$<span id="goMoney">0</span></div>
+            <div class="gameover-label">Заработано</div>
+
+            <div class="gameover-rfq" id="goRfq">
+                <div class="gameover-rfq-text" id="goRfqText"></div>
+            </div>
 
             <div class="gameover-stats">
                 <div class="gameover-stat">
-                    <div class="gameover-stat-value" id="goGifts">0</div>
-                    <div class="gameover-stat-label">🎁 Подарков</div>
+                    <div class="gameover-stat-value" id="goParts">0</div>
+                    <div class="gameover-stat-label">Деталей</div>
                 </div>
                 <div class="gameover-stat">
-                    <div class="gameover-stat-value" id="goBest">0</div>
-                    <div class="gameover-stat-label">🏆 Лучший</div>
+                    <div class="gameover-stat-value" id="goBest">$0</div>
+                    <div class="gameover-stat-label">Рекорд</div>
                 </div>
             </div>
 
@@ -907,236 +712,663 @@
         // ==========================================
         // CONFIG
         // ==========================================
-        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-        const SUPABASE_KEY = 'YOUR_ANON_KEY';
+        let W = window.innerWidth;
+        let H = window.innerHeight;
+        let safeAreaTop = 100;
 
-        const W = 360;
-        const H = 640;
+        const PARTS_DATA = [
+            // Common (60%)
+            { name: 'O-Ring', icon: '⭕', rarity: 'common', value: 10, chance: 0.20 },
+            { name: 'Washer', icon: '🔘', rarity: 'common', value: 20, chance: 0.20 },
+            { name: 'Rivet', icon: '📍', rarity: 'common', value: 30, chance: 0.20 },
+            // Uncommon (25%)
+            { name: 'Valve', icon: '🔧', rarity: 'uncommon', value: 200, chance: 0.10 },
+            { name: 'Filter', icon: '🧽', rarity: 'uncommon', value: 300, chance: 0.08 },
+            { name: 'Bearing', icon: '⚙️', rarity: 'uncommon', value: 500, chance: 0.07 },
+            // Rare (12%)
+            { name: 'Fuel Pump', icon: '⛽', rarity: 'rare', value: 2000, chance: 0.05 },
+            { name: 'Actuator', icon: '🔌', rarity: 'rare', value: 3000, chance: 0.04 },
+            { name: 'Sensor', icon: '📡', rarity: 'rare', value: 5000, chance: 0.03 },
+            // Epic (2.5%)
+            { name: 'HMU', icon: '🎛️', rarity: 'epic', value: 20000, chance: 0.015 },
+            { name: 'Starter', icon: '⚡', rarity: 'epic', value: 30000, chance: 0.01 },
+            // Legendary (0.5%)
+            { name: 'APU', icon: '🔋', rarity: 'legendary', value: 100000, chance: 0.003 },
+            { name: 'Engine Module', icon: '🛫', rarity: 'legendary', value: 200000, chance: 0.002 }
+        ];
+
+        const CLIENTS = ['Aeroflot', 'Emirates', 'Lufthansa', 'Air France', 'British Airways', 'Qatar Airways', 'S7 Airlines', 'Utair'];
 
         const CONFIG = {
-            CANVAS_WIDTH: W,
-            CANVAS_HEIGHT: H,
-            PLAYER: { SIZE: 40, X: 80, JUMP: -7.5, GRAVITY: 0.35, MAX_V: 10 },
-            PIPES: { WIDTH: 55, GAP: 190, SPEED: 3, SPAWN: 110, MIN_H: 80 },
-            GIFTS: { SIZE: 35, CHANCE: 0.4, POINTS: 5, SHIELD: 180 },
-            DIFFICULTY: { SPEED_INC: 0.0005, MAX_SPEED: 2.0, GAP_DEC: 0.0005, MIN_GAP: 140 },
-            COLORS: { PIPE: '#1a2a4a', PIPE_LIGHT: '#3a5a8a', PIPE_CAP: '#4a7ccc' }
+            PLAYER: { X: 80, SIZE: 40, JUMP: -9, GRAVITY: 0.4, MAX_V: 12 },
+            OBSTACLES: { WIDTH: 60, GAP: 200, SPEED: 3.5, SPAWN: 120, MIN_H: 100 },
+            PARTS: { SIZE: 40, SPAWN_RATE: 60 },
+            DIFFICULTY: { SPEED_INC: 0.0003, MAX_SPEED: 2.5 }
         };
 
         // ==========================================
         // STATE
         // ==========================================
         let gameState = 'menu';
-        let score = 0, gifts = 0, frameCount = 0;
-        let speedMult = 1.0, currentGap = CONFIG.PIPES.GAP;
-        let shieldActive = false, shieldTimer = 0;
+        let money = 0, partsCollected = 0, frameCount = 0, speedMult = 1.0;
 
-        let stats = JSON.parse(localStorage.getItem('avsStats')) || { best: 0, gifts: 0, games: 0 };
-        let settings = JSON.parse(localStorage.getItem('avsSettings')) || { sound: true, vibration: true };
+        let stats = JSON.parse(localStorage.getItem('avrStats')) || { money: 0, rfq: 0, parts: 0, games: 0, best: 0 };
 
-        let player = { x: CONFIG.PLAYER.X, y: CONFIG.CANVAS_HEIGHT / 2, v: 0, rot: 0 };
-        let pipes = [], giftsArr = [], particles = [], snowflakes = [], trails = [];
+        let player = { x: CONFIG.PLAYER.X, y: H / 2, v: 0, rot: 0 };
+        let obstacles = [], parts = [], particles = [];
+
+        let currentRfq = null;
+        let rfqProgress = {};
 
         // ==========================================
-        // CANVAS & ASSETS
+        // CANVAS
         // ==========================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = W;
-        canvas.height = H;
 
-        const bgImg = new Image();
-        bgImg.onerror = () => { bgImg.failed = true; };
-        bgImg.src = 'background.png';
-        
-        const playerImg = new Image();
-        playerImg.onerror = () => { playerImg.failed = true; };
-        playerImg.src = 'player.png';
+        function resize() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            canvas.width = W;
+            canvas.height = H;
+        }
+        resize();
+        window.addEventListener('resize', resize);
 
         // ==========================================
         // TELEGRAM
         // ==========================================
         let tg = window.Telegram?.WebApp;
         let playerName = 'Пилот';
-        let safeAreaTop = 100;
-        
+
         if (tg) {
             tg.ready();
             tg.expand();
-            
-            // Получаем safe area от Telegram
-            if (tg.safeAreaInset) {
-                safeAreaTop = Math.max(100, tg.safeAreaInset.top + 50);
-            }
-            if (tg.contentSafeAreaInset) {
-                safeAreaTop = Math.max(safeAreaTop, tg.contentSafeAreaInset.top + 50);
-            }
-            
-            // Применяем отступы
+
+            if (tg.safeAreaInset) safeAreaTop = Math.max(100, tg.safeAreaInset.top + 50);
+            if (tg.contentSafeAreaInset) safeAreaTop = Math.max(safeAreaTop, tg.contentSafeAreaInset.top + 50);
+
             document.documentElement.style.setProperty('--safe-top', safeAreaTop + 'px');
-            
+
             if (tg.initDataUnsafe?.user) {
-                const user = tg.initDataUnsafe.user;
-                const firstName = user.first_name || '';
-                const lastName = user.last_name || '';
-                playerName = (firstName + ' ' + lastName).trim() || 'Пилот';
+                const u = tg.initDataUnsafe.user;
+                playerName = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Пилот';
+            }
+
+            setTimeout(resize, 100);
+        }
+
+        // ==========================================
+        // SOUND & HAPTIC
+        // ==========================================
+        function vibrate(type = 'light') {
+            if (tg?.HapticFeedback) {
+                if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+                else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+                else if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
+                else tg.HapticFeedback.impactOccurred('light');
             }
         }
 
         // ==========================================
-        // SOUND
+        // RFQ SYSTEM
         // ==========================================
-        class Sound {
-            constructor() { this.ctx = null; }
-            init() {
-                if (this.ctx) return;
-                try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+        function generateRfq() {
+            const numParts = Math.floor(Math.random() * 3) + 2; // 2-4 parts
+            const rfqParts = [];
+            const usedParts = new Set();
+
+            for (let i = 0; i < numParts; i++) {
+                let part;
+                do {
+                    // Bias towards common/uncommon for RFQ
+                    const roll = Math.random();
+                    if (roll < 0.5) part = PARTS_DATA[Math.floor(Math.random() * 3)]; // common
+                    else if (roll < 0.8) part = PARTS_DATA[3 + Math.floor(Math.random() * 3)]; // uncommon
+                    else if (roll < 0.95) part = PARTS_DATA[6 + Math.floor(Math.random() * 3)]; // rare
+                    else part = PARTS_DATA[9 + Math.floor(Math.random() * 2)]; // epic
+                } while (usedParts.has(part.name));
+
+                usedParts.add(part.name);
+                rfqParts.push({ ...part, qty: Math.floor(Math.random() * 2) + 1 });
             }
-            play(type) {
-                if (!settings.sound || !this.ctx) return;
-                const c = this.ctx, o = c.createOscillator(), g = c.createGain();
-                o.connect(g); g.connect(c.destination);
-                const now = c.currentTime;
-                switch(type) {
-                    case 'jump':
-                        o.frequency.setValueAtTime(400, now);
-                        o.frequency.exponentialRampToValueAtTime(600, now + 0.1);
-                        g.gain.setValueAtTime(0.15, now);
-                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                        o.start(now); o.stop(now + 0.1);
-                        break;
-                    case 'score':
-                        o.frequency.setValueAtTime(523, now);
-                        o.frequency.setValueAtTime(659, now + 0.1);
-                        g.gain.setValueAtTime(0.15, now);
-                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                        o.start(now); o.stop(now + 0.2);
-                        break;
-                    case 'gift':
-                        o.frequency.setValueAtTime(800, now);
-                        o.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
-                        g.gain.setValueAtTime(0.2, now);
-                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                        o.start(now); o.stop(now + 0.3);
-                        break;
-                    case 'crash':
-                        o.type = 'sawtooth';
-                        o.frequency.setValueAtTime(200, now);
-                        o.frequency.exponentialRampToValueAtTime(50, now + 0.4);
-                        g.gain.setValueAtTime(0.2, now);
-                        g.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                        o.start(now); o.stop(now + 0.4);
-                        break;
+
+            const reward = rfqParts.reduce((sum, p) => sum + p.value * p.qty, 0) * 2;
+
+            return {
+                number: String(Math.floor(Math.random() * 900) + 100),
+                client: CLIENTS[Math.floor(Math.random() * CLIENTS.length)],
+                parts: rfqParts,
+                reward
+            };
+        }
+
+        function showRfqScreen() {
+            currentRfq = generateRfq();
+            rfqProgress = {};
+            currentRfq.parts.forEach(p => rfqProgress[p.name] = 0);
+
+            document.getElementById('rfqNumber').textContent = currentRfq.number;
+            document.getElementById('rfqClient').textContent = currentRfq.client;
+            document.getElementById('rfqReward').textContent = currentRfq.reward.toLocaleString();
+
+            const partsHtml = currentRfq.parts.map(p => `
+                <div class="rfq-part">
+                    <div class="rfq-part-icon rarity-${p.rarity}">${p.icon}</div>
+                    <div class="rfq-part-info">
+                        <div class="rfq-part-name">${p.name}</div>
+                        <div class="rfq-part-rarity text-${p.rarity}">${p.rarity.toUpperCase()}</div>
+                    </div>
+                    <div class="rfq-part-qty">×${p.qty}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('rfqParts').innerHTML = partsHtml;
+            showScreen('rfqScreen');
+        }
+
+        function updateHudRfq() {
+            if (!currentRfq) return;
+            const html = currentRfq.parts.map(p => {
+                const collected = rfqProgress[p.name] >= p.qty;
+                return `<div class="rfq-item ${collected ? 'collected' : ''}">${p.icon}${rfqProgress[p.name]}/${p.qty}</div>`;
+            }).join('');
+            document.getElementById('hudRfq').innerHTML = html;
+        }
+
+        function checkRfqComplete() {
+            if (!currentRfq) return false;
+            return currentRfq.parts.every(p => rfqProgress[p.name] >= p.qty);
+        }
+
+        // ==========================================
+        // GAME
+        // ==========================================
+        function reset() {
+            player = { x: CONFIG.PLAYER.X, y: (safeAreaTop + H) / 2, v: 0, rot: 0 };
+            obstacles = [];
+            parts = [];
+            particles = [];
+            money = 0;
+            partsCollected = 0;
+            frameCount = 0;
+            speedMult = 1.0;
+
+            if (currentRfq) {
+                rfqProgress = {};
+                currentRfq.parts.forEach(p => rfqProgress[p.name] = 0);
+            }
+
+            document.getElementById('hudMoney').textContent = '0';
+            document.getElementById('hudParts').textContent = '📦 0';
+            document.getElementById('hudSpeed').textContent = '⚡ x1.0';
+            updateHudRfq();
+        }
+
+        function startGame() {
+            reset();
+            gameState = 'playing';
+            showScreen(null);
+            document.getElementById('hud').classList.add('visible');
+        }
+
+        function gameOver() {
+            gameState = 'over';
+            vibrate('error');
+
+            const rfqComplete = checkRfqComplete();
+            let totalEarned = money;
+
+            if (rfqComplete && currentRfq) {
+                totalEarned += currentRfq.reward;
+                stats.rfq++;
+            }
+
+            stats.games++;
+            stats.parts += partsCollected;
+            stats.money += totalEarned;
+            if (totalEarned > stats.best) stats.best = totalEarned;
+            localStorage.setItem('avrStats', JSON.stringify(stats));
+
+            document.getElementById('goMoney').textContent = totalEarned.toLocaleString();
+            document.getElementById('goParts').textContent = partsCollected;
+            document.getElementById('goBest').textContent = '$' + stats.best.toLocaleString();
+
+            const rfqEl = document.getElementById('goRfq');
+            const rfqText = document.getElementById('goRfqText');
+
+            if (currentRfq) {
+                if (rfqComplete) {
+                    rfqEl.className = 'gameover-rfq success';
+                    rfqText.textContent = `✅ RFQ #${currentRfq.number} выполнен! +$${currentRfq.reward.toLocaleString()}`;
+                } else {
+                    rfqEl.className = 'gameover-rfq failed';
+                    rfqText.textContent = `❌ RFQ #${currentRfq.number} не выполнен`;
+                }
+                rfqEl.style.display = 'block';
+            } else {
+                rfqEl.style.display = 'none';
+            }
+
+            document.getElementById('hud').classList.remove('visible');
+            showScreen('gameoverScreen');
+
+            // Explosion
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: player.x, y: player.y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    size: Math.random() * 6 + 2,
+                    color: `hsl(${Math.random() * 60 + 10}, 100%, 50%)`,
+                    life: 1
+                });
+            }
+        }
+
+        function jump() {
+            if (gameState !== 'playing') return;
+            player.v = CONFIG.PLAYER.JUMP;
+            vibrate('light');
+        }
+
+        // ==========================================
+        // SPAWN
+        // ==========================================
+        function spawnObstacle() {
+            const minTop = safeAreaTop + CONFIG.OBSTACLES.MIN_H;
+            const maxTop = H - CONFIG.OBSTACLES.GAP - CONFIG.OBSTACLES.MIN_H - 60;
+            const top = Math.random() * (maxTop - minTop) + minTop;
+
+            obstacles.push({
+                x: W,
+                top,
+                bottom: top + CONFIG.OBSTACLES.GAP,
+                passed: false
+            });
+        }
+
+        function spawnPart() {
+            // Determine rarity
+            const roll = Math.random();
+            let cumulative = 0;
+            let partData = PARTS_DATA[0];
+
+            for (const p of PARTS_DATA) {
+                cumulative += p.chance;
+                if (roll < cumulative) {
+                    partData = p;
+                    break;
                 }
             }
+
+            // Position in safe area
+            const y = safeAreaTop + 80 + Math.random() * (H - safeAreaTop - 160);
+
+            const part = {
+                x: W + 50,
+                y,
+                ...partData,
+                collected: false,
+                glow: 0
+            };
+
+            // Show alert for legendary
+            if (partData.rarity === 'legendary') {
+                const alert = document.getElementById('legendaryAlert');
+                alert.classList.add('show');
+                vibrate('heavy');
+                setTimeout(() => alert.classList.remove('show'), 1500);
+            }
+
+            parts.push(part);
         }
-        const sound = new Sound();
 
         // ==========================================
-        // LEADERBOARD
+        // UPDATE
         // ==========================================
-        class Leaderboard {
-            constructor() {
-                this.enabled = SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co';
-                this.cache = []; this.lastFetch = 0;
+        function updatePlayer() {
+            player.v += CONFIG.GRAVITY;
+            player.v = Math.min(player.v, CONFIG.PLAYER.MAX_V);
+            player.y += player.v;
+            player.rot = Math.min(Math.max(player.v * 0.05, -0.4), 0.6);
+
+            // Boundaries
+            if (player.y < safeAreaTop + 30) {
+                player.y = safeAreaTop + 30;
+                player.v = 0;
             }
-            async fetch() {
-                if (!this.enabled) return this.local();
-                if (Date.now() - this.lastFetch < 30000 && this.cache.length) return this.cache;
-                try {
-                    const r = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=50`,
-                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
-                    if (r.ok) { this.cache = await r.json(); this.lastFetch = Date.now(); return this.cache; }
-                } catch(e) {}
-                return this.local();
+            if (player.y > H - 60) {
+                gameOver();
             }
-            async submit(name, score, gifts) {
-                this.saveLocal(name, score, gifts);
-                if (!this.enabled) return;
-                try {
-                    // Проверяем текущий лучший счёт игрока
-                    const check = await fetch(
-                        `${SUPABASE_URL}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(name)}&select=score`,
-                        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-                    );
-                    const existing = await check.json();
-                    
-                    if (existing.length > 0) {
-                        // Запись есть - обновляем только если новый счёт выше
-                        if (score > existing[0].score) {
-                            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(name)}`, {
-                                method: 'PATCH',
-                                headers: { 
-                                    'apikey': SUPABASE_KEY, 
-                                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ score, gifts })
+        }
+
+        function updateObstacles() {
+            const sp = CONFIG.OBSTACLES.SPEED * speedMult;
+
+            if (frameCount % Math.floor(CONFIG.OBSTACLES.SPAWN / speedMult) === 0) {
+                spawnObstacle();
+            }
+
+            obstacles.forEach((o, i) => {
+                o.x -= sp;
+
+                // Collision
+                if (!o.passed && player.x + 30 > o.x && player.x - 30 < o.x + CONFIG.OBSTACLES.WIDTH) {
+                    if (player.y - 20 < o.top || player.y + 20 > o.bottom) {
+                        gameOver();
+                    }
+                }
+
+                if (!o.passed && o.x + CONFIG.OBSTACLES.WIDTH < player.x) {
+                    o.passed = true;
+                }
+
+                if (o.x < -CONFIG.OBSTACLES.WIDTH) {
+                    obstacles.splice(i, 1);
+                }
+            });
+        }
+
+        function updateParts() {
+            const sp = CONFIG.OBSTACLES.SPEED * speedMult;
+
+            if (frameCount % CONFIG.PARTS.SPAWN_RATE === 0) {
+                spawnPart();
+            }
+
+            parts.forEach((p, i) => {
+                p.x -= sp;
+                p.glow = (Math.sin(frameCount * 0.1) + 1) / 2;
+
+                if (!p.collected) {
+                    const dx = player.x - p.x;
+                    const dy = player.y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 45) {
+                        p.collected = true;
+                        money += p.value;
+                        partsCollected++;
+
+                        if (currentRfq && rfqProgress[p.name] !== undefined) {
+                            rfqProgress[p.name]++;
+                            updateHudRfq();
+                        }
+
+                        document.getElementById('hudMoney').textContent = money.toLocaleString();
+                        document.getElementById('hudParts').textContent = '📦 ' + partsCollected;
+
+                        // Popup
+                        showPartPopup(p);
+
+                        // Particles
+                        for (let j = 0; j < 8; j++) {
+                            particles.push({
+                                x: p.x, y: p.y,
+                                vx: (Math.random() - 0.5) * 6,
+                                vy: (Math.random() - 0.5) * 6,
+                                size: Math.random() * 4 + 2,
+                                color: getRarityColor(p.rarity),
+                                life: 1
                             });
                         }
-                    } else {
-                        // Записи нет - создаём новую
-                        await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
-                            method: 'POST',
-                            headers: { 
-                                'apikey': SUPABASE_KEY, 
-                                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ player_name: name.substring(0, 50), score, gifts })
-                        });
+
+                        if (p.rarity === 'legendary' || p.rarity === 'epic') {
+                            vibrate('success');
+                        } else {
+                            vibrate('light');
+                        }
                     }
-                    this.lastFetch = 0;
-                } catch(e) { console.error('Leaderboard error:', e); }
-            }
-            local() { 
-                return JSON.parse(localStorage.getItem('avsLB')) || []; 
-            }
-            saveLocal(name, score, gifts) {
-                let s = this.local();
-                // Ищем существующую запись игрока
-                const existing = s.find(e => e.player_name === name);
-                if (existing) {
-                    // Обновляем только если новый счёт выше
-                    if (score > existing.score) {
-                        existing.score = score;
-                        existing.gifts = gifts;
-                    }
-                } else {
-                    s.push({ player_name: name, score, gifts });
                 }
-                s.sort((a, b) => b.score - a.score);
-                localStorage.setItem('avsLB', JSON.stringify(s.slice(0, 20)));
+
+                if (p.x < -50 || p.collected) {
+                    parts.splice(i, 1);
+                }
+            });
+        }
+
+        function updateDifficulty() {
+            if (speedMult < CONFIG.DIFFICULTY.MAX_SPEED) {
+                speedMult += CONFIG.DIFFICULTY.SPEED_INC;
             }
-            async render(el) {
-                const c = document.getElementById(el);
-                c.innerHTML = '<div class="lb-empty">Загрузка...</div>';
-                const data = await this.fetch();
-                if (!data.length) { c.innerHTML = '<div class="lb-empty">Пока нет результатов</div>'; return; }
-                
-                // Оставляем только лучший результат каждого игрока
-                const bestScores = {};
-                data.forEach(e => {
-                    const name = e.player_name || 'Пилот';
-                    if (!bestScores[name] || e.score > bestScores[name].score) {
-                        bestScores[name] = e;
-                    }
-                });
-                const uniqueData = Object.values(bestScores).sort((a, b) => b.score - a.score);
-                
-                c.innerHTML = uniqueData.slice(0, 10).map((e, i) => {
-                    const name = e.player_name || 'Пилот';
-                    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'default';
-                    return `<div class="lb-item ${name === playerName ? 'highlight' : ''}">
-                        <div class="lb-rank ${rankClass}">${i + 1}</div>
-                        <div class="lb-avatar">${name[0].toUpperCase()}</div>
-                        <div class="lb-info"><div class="lb-name">${name}</div><div class="lb-gifts">🎁 ${e.gifts || 0}</div></div>
-                        <div class="lb-score">${e.score}</div>
-                    </div>`;
-                }).join('');
+            document.getElementById('hudSpeed').textContent = '⚡ x' + speedMult.toFixed(1);
+        }
+
+        function updateParticles() {
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life -= 0.02;
+                p.size *= 0.98;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            });
+        }
+
+        // ==========================================
+        // DRAW
+        // ==========================================
+        function drawBg() {
+            // Sky gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, '#1a1a2e');
+            grad.addColorStop(0.5, '#16213e');
+            grad.addColorStop(1, '#0f3460');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Stars
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 73 + frameCount * 0.1) % W;
+                const y = (i * 47) % (H * 0.6);
+                ctx.beginPath();
+                ctx.arc(x, y, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            for (let i = 0; i < 5; i++) {
+                const x = ((i * 200 - frameCount * 0.5) % (W + 200)) - 100;
+                const y = 100 + i * 80;
+                ctx.beginPath();
+                ctx.ellipse(x, y, 80, 30, 0, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
-        const lb = new Leaderboard();
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.rot);
+
+            // Glow
+            ctx.shadowColor = '#4a6cf7';
+            ctx.shadowBlur = 20;
+
+            // Body
+            ctx.fillStyle = '#e8e8e8';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 25, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cockpit
+            ctx.fillStyle = '#4a6cf7';
+            ctx.beginPath();
+            ctx.ellipse(15, -2, 8, 6, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wings
+            ctx.fillStyle = '#c0c0c0';
+            ctx.beginPath();
+            ctx.moveTo(-5, 0);
+            ctx.lineTo(-15, -20);
+            ctx.lineTo(5, -20);
+            ctx.lineTo(5, 0);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(-5, 0);
+            ctx.lineTo(-15, 20);
+            ctx.lineTo(5, 20);
+            ctx.lineTo(5, 0);
+            ctx.fill();
+
+            // Tail
+            ctx.fillStyle = '#4a6cf7';
+            ctx.beginPath();
+            ctx.moveTo(-25, 0);
+            ctx.lineTo(-35, -12);
+            ctx.lineTo(-25, -10);
+            ctx.fill();
+
+            // Engine trail
+            ctx.shadowBlur = 0;
+            const trailLen = 15 + Math.random() * 10;
+            const trailGrad = ctx.createLinearGradient(-25, 0, -25 - trailLen, 0);
+            trailGrad.addColorStop(0, 'rgba(255,150,50,0.8)');
+            trailGrad.addColorStop(1, 'rgba(255,100,50,0)');
+            ctx.fillStyle = trailGrad;
+            ctx.beginPath();
+            ctx.moveTo(-25, -3);
+            ctx.lineTo(-25 - trailLen, 0);
+            ctx.lineTo(-25, 3);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(o => {
+                // Gradient for 3D effect
+                const grad = ctx.createLinearGradient(o.x, 0, o.x + CONFIG.OBSTACLES.WIDTH, 0);
+                grad.addColorStop(0, '#2d4a6f');
+                grad.addColorStop(0.5, '#4a7caa');
+                grad.addColorStop(1, '#2d4a6f');
+
+                ctx.fillStyle = grad;
+
+                // Top obstacle
+                ctx.fillRect(o.x, 0, CONFIG.OBSTACLES.WIDTH, o.top);
+                // Bottom obstacle
+                ctx.fillRect(o.x, o.bottom, CONFIG.OBSTACLES.WIDTH, H - o.bottom);
+
+                // Caps
+                ctx.fillStyle = '#5a9fd4';
+                ctx.fillRect(o.x - 5, o.top - 20, CONFIG.OBSTACLES.WIDTH + 10, 20);
+                ctx.fillRect(o.x - 5, o.bottom, CONFIG.OBSTACLES.WIDTH + 10, 20);
+
+                // Warning lights
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(o.x + CONFIG.OBSTACLES.WIDTH / 2, o.top - 10, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(o.x + CONFIG.OBSTACLES.WIDTH / 2, o.bottom + 10, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawParts() {
+            parts.forEach(p => {
+                if (p.collected) return;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+
+                // Glow based on rarity
+                const glowColors = {
+                    common: 'rgba(150,150,150,0.3)',
+                    uncommon: 'rgba(46,204,113,0.4)',
+                    rare: 'rgba(74,108,247,0.5)',
+                    epic: 'rgba(155,89,182,0.6)',
+                    legendary: 'rgba(240,185,11,0.8)'
+                };
+
+                ctx.shadowColor = glowColors[p.rarity];
+                ctx.shadowBlur = 15 + p.glow * 10;
+
+                // Background circle
+                ctx.fillStyle = getRarityBg(p.rarity);
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Icon
+                ctx.shadowBlur = 0;
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(p.icon, 0, 0);
+
+                // Value label for rare+
+                if (p.rarity !== 'common') {
+                    ctx.font = 'bold 9px Inter';
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('$' + formatMoney(p.value), 0, 32);
+                }
+
+                ctx.restore();
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        function getRarityColor(rarity) {
+            const colors = {
+                common: '#9ca3af',
+                uncommon: '#2ecc71',
+                rare: '#4a6cf7',
+                epic: '#9b59b6',
+                legendary: '#f0b90b'
+            };
+            return colors[rarity] || '#fff';
+        }
+
+        function getRarityBg(rarity) {
+            const colors = {
+                common: 'rgba(100,100,100,0.8)',
+                uncommon: 'rgba(46,204,113,0.8)',
+                rare: 'rgba(74,108,247,0.8)',
+                epic: 'rgba(155,89,182,0.8)',
+                legendary: 'rgba(240,185,11,0.9)'
+            };
+            return colors[rarity] || 'rgba(100,100,100,0.8)';
+        }
+
+        function formatMoney(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+            return n.toString();
+        }
+
+        function showPartPopup(part) {
+            const popup = document.createElement('div');
+            popup.className = 'part-popup';
+            popup.style.left = part.x + 'px';
+            popup.style.top = (part.y - 30) + 'px';
+            popup.style.color = getRarityColor(part.rarity);
+            popup.innerHTML = `+$${part.value.toLocaleString()}`;
+            document.querySelector('.game-container').appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
 
         // ==========================================
         // UI
@@ -1146,426 +1378,55 @@
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             if (id) $(id).classList.add('active');
-            $('snowflakes').style.display = (id === 'mainMenu' || id === 'leaderboardScreen' || id === 'settingsScreen') ? 'block' : 'none';
         }
 
-        function updateStats() {
-            $('statBest').textContent = stats.best;
-            $('statGifts').textContent = stats.gifts;
-            $('statGames').textContent = stats.games;
-        }
-
-        function updateToggles() {
-            $('toggleSound').classList.toggle('active', settings.sound);
-            $('toggleVibration').classList.toggle('active', settings.vibration);
-        }
-
-        function createSnowflakes() {
-            const c = $('snowflakes');
-            c.innerHTML = '';
-            for (let i = 0; i < 25; i++) {
-                const s = document.createElement('div');
-                s.className = 'snowflake';
-                s.textContent = '❄';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.fontSize = (Math.random() * 12 + 8) + 'px';
-                s.style.animationDuration = (Math.random() * 6 + 6) + 's';
-                s.style.animationDelay = Math.random() * 6 + 's';
-                c.appendChild(s);
-            }
-        }
-
-        function vibrate(p, type = 'light') {
-            if (!settings.vibration) return;
-            
-            // Telegram HapticFeedback (лучше работает на iOS/Android)
-            if (tg?.HapticFeedback) {
-                if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
-                else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-                else if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
-                else if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
-                else if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
-                else tg.HapticFeedback.impactOccurred('light');
-            }
-            
-            // Стандартная вибрация (fallback)
-            if (navigator.vibrate) navigator.vibrate(p);
-        }
-
-        // ==========================================
-        // GAME
-        // ==========================================
-        function initSnow() {
-            snowflakes = [];
-            for (let i = 0; i < 50; i++) {
-                snowflakes.push({ x: Math.random() * W, y: Math.random() * H, sz: Math.random() * 3 + 1, sp: Math.random() * 1 + 0.5, op: Math.random() * 0.4 + 0.2 });
-            }
-        }
-
-        function reset() {
-            player = { x: CONFIG.PLAYER.X, y: H / 2, v: 0, rot: 0 };
-            pipes = []; giftsArr = []; particles = []; trails = [];
-            score = 0; gifts = 0; frameCount = 0;
-            speedMult = 1.0; currentGap = CONFIG.PIPES.GAP;
-            shieldActive = false; shieldTimer = 0;
-            $('hudScore').textContent = '0';
-            $('hudGifts').textContent = '🎁 0';
-            $('hudSpeed').textContent = '⚡ x1.0';
-            $('shieldBar').classList.remove('active');
-        }
-
-        function start() {
-            sound.init();
-            reset();
-            gameState = 'playing';
-            showScreen(null);
-            $('hud').classList.add('visible');
-        }
-
-        function gameOver() {
-            gameState = 'over';
-            sound.play('crash');
-            vibrate([100, 50, 100], 'error');
-
-            stats.games++;
-            stats.gifts += gifts;
-            const isRecord = score > stats.best;
-            if (isRecord) stats.best = score;
-            localStorage.setItem('avsStats', JSON.stringify(stats));
-
-            // Отправляем в лидерборд всегда (проверка на лучший счёт внутри)
-            lb.submit(playerName, score, gifts);
-
-            $('goScore').textContent = score;
-            $('goGifts').textContent = gifts;
-            $('goBest').textContent = stats.best;
-            $('newRecordBadge').classList.toggle('visible', isRecord);
-
-            $('hud').classList.remove('visible');
-            showScreen('gameoverScreen');
-            explosion(player.x, player.y);
-        }
-
-        function jump() {
-            if (gameState !== 'playing') return;
-            player.v = CONFIG.PLAYER.JUMP;
-            sound.play('jump');
-            vibrate(25);
-        }
-
-        // ==========================================
-        // DRAW
-        // ==========================================
-        function drawBg() {
-            if (bgImg.complete && bgImg.naturalWidth > 0 && !bgImg.failed) {
-                ctx.drawImage(bgImg, 0, 0, W, H);
-            } else {
-                ctx.fillStyle = '#0a0b14';
-                ctx.fillRect(0, 0, W, H);
-            }
-        }
-
-        function drawSnow() {
-            snowflakes.forEach(s => {
-                ctx.globalAlpha = s.op;
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.sz, 0, Math.PI * 2);
-                ctx.fill();
-                s.y += s.sp * speedMult;
-                s.x += Math.sin(frameCount * 0.01 + s.x) * 0.3;
-                if (s.y > H) { s.y = -5; s.x = Math.random() * W; }
-            });
-            ctx.globalAlpha = 1;
-        }
-
-        function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.rotate(player.rot);
-            const bob = Math.sin(frameCount * 0.15) * 3;
-
-            if (shieldActive) {
-                ctx.shadowColor = '#00d4ff';
-                ctx.shadowBlur = 30 + Math.sin(frameCount * 0.2) * 10;
-                ctx.strokeStyle = `rgba(0, 212, 255, ${0.4 + Math.sin(frameCount * 0.1) * 0.2})`;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(0, bob, 52, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            if (playerImg.complete && playerImg.naturalWidth > 0 && !playerImg.failed) {
-                ctx.drawImage(playerImg, -44, -25 + bob, 88, 50);
-            } else {
-                // Fallback - рисуем круг
-                ctx.fillStyle = '#e74c3c';
-                ctx.beginPath();
-                ctx.arc(0, bob, 25, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.shadowBlur = 0;
-            ctx.restore();
-
-            if (gameState === 'playing' && frameCount % 3 === 0) {
-                trails.push({ x: player.x - 35, y: player.y + 10 + Math.random() * 8, sz: Math.random() * 4 + 2, a: 0.7, c: shieldActive ? '0,212,255' : '255,180,50' });
-            }
-        }
-
-        function drawTrails() {
-            const sp = CONFIG.PIPES.SPEED * speedMult;
-            trails.forEach((t, i) => {
-                ctx.fillStyle = `rgba(${t.c},${t.a})`;
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, t.sz, 0, Math.PI * 2);
-                ctx.fill();
-                t.x -= sp * 0.8;
-                t.a -= 0.02;
-                t.sz *= 0.96;
-                if (t.a <= 0 || t.x < -10) trails.splice(i, 1);
-            });
-        }
-
-        function drawPipes() {
-            pipes.forEach(p => {
-                const grad = ctx.createLinearGradient(p.x, 0, p.x + CONFIG.PIPES.WIDTH, 0);
-                grad.addColorStop(0, CONFIG.COLORS.PIPE);
-                grad.addColorStop(0.5, CONFIG.COLORS.PIPE_LIGHT);
-                grad.addColorStop(1, CONFIG.COLORS.PIPE);
-
-                ctx.fillStyle = grad;
-                ctx.fillRect(p.x, 0, CONFIG.PIPES.WIDTH, p.top);
-                ctx.fillRect(p.x, p.bot, CONFIG.PIPES.WIDTH, H - p.bot);
-
-                ctx.fillStyle = CONFIG.COLORS.PIPE_CAP;
-                ctx.fillRect(p.x - 4, p.top - 20, CONFIG.PIPES.WIDTH + 8, 20);
-                ctx.fillRect(p.x - 4, p.bot, CONFIG.PIPES.WIDTH + 8, 20);
-
-                // Warning lights
-                ctx.fillStyle = '#ff4444';
-                ctx.beginPath();
-                ctx.arc(p.x + CONFIG.PIPES.WIDTH / 2, p.top - 20, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(p.x + CONFIG.PIPES.WIDTH / 2, p.bot + 20, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function drawGifts() {
-            giftsArr.forEach(g => {
-                ctx.save();
-                ctx.translate(g.x, g.y);
-                const wb = Math.sin(frameCount * 0.1 + g.x) * 4;
-                ctx.rotate(Math.sin(frameCount * 0.05) * 0.08);
-
-                ctx.shadowColor = '#f0b90b';
-                ctx.shadowBlur = 15 + Math.sin(frameCount * 0.1) * 5;
-
-                const s = CONFIG.GIFTS.SIZE;
-                ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(-s/2, -s/2 + wb, s, s);
-
-                ctx.fillStyle = '#f0b90b';
-                ctx.fillRect(-3, -s/2 + wb, 6, s);
-                ctx.fillRect(-s/2, -3 + wb, s, 6);
-
-                ctx.beginPath();
-                ctx.ellipse(-7, -s/2 - 4 + wb, 7, 5, -0.3, 0, Math.PI * 2);
-                ctx.ellipse(7, -s/2 - 4 + wb, 7, 5, 0.3, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.shadowBlur = 0;
-                ctx.restore();
-            });
-        }
-
-        function drawParticles() {
-            particles.forEach((p, i) => {
-                ctx.fillStyle = `rgba(${p.c},${p.a})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.sz, 0, Math.PI * 2);
-                ctx.fill();
-                p.x += p.vx; p.y += p.vy;
-                if (p.g) p.vy += 0.15;
-                p.a -= 0.02;
-                p.sz *= 0.97;
-                if (p.a <= 0) particles.splice(i, 1);
-            });
-        }
-
-        function explosion(x, y) {
-            const colors = ['255,100,50', '255,200,50', '255,150,0'];
-            for (let i = 0; i < 25; i++) {
-                particles.push({ x, y, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, sz: Math.random() * 7 + 2, c: colors[Math.floor(Math.random() * 3)], a: 1, g: false });
-            }
-        }
-
-        function giftExplosion(x, y) {
-            const colors = ['240,185,11', '0,212,255', '231,76,60'];
-            for (let i = 0; i < 18; i++) {
-                particles.push({ x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 2, sz: Math.random() * 5 + 2, c: colors[Math.floor(Math.random() * 3)], a: 1, g: true });
-            }
-        }
-
-        // ==========================================
-        // UPDATE
-        // ==========================================
-        function updatePlayer() {
-            player.v += CONFIG.PLAYER.GRAVITY;
-            player.v = Math.min(player.v, CONFIG.PLAYER.MAX_V);
-            player.y += player.v;
-            player.rot = Math.min(Math.max(player.v * 0.06, -0.4), 0.6);
-
-            if (player.y < 25) { player.y = 25; player.v = 0; }
-            if (player.y > H - 60) {
-                if (!shieldActive) gameOver();
-                else { player.y = H - 60; player.v = CONFIG.PLAYER.JUMP; }
-            }
-        }
-
-        function updatePipes() {
-            const sp = CONFIG.PIPES.SPEED * speedMult;
-            const spawnRate = Math.floor(CONFIG.PIPES.SPAWN / speedMult);
-
-            if (frameCount % spawnRate === 0) {
-                const minT = CONFIG.PIPES.MIN_H;
-                const maxT = H - currentGap - CONFIG.PIPES.MIN_H - 60;
-                const top = Math.random() * (maxT - minT) + minT;
-                pipes.push({ x: W, top, bot: top + currentGap, passed: false });
-
-                if (Math.random() < CONFIG.GIFTS.CHANCE) {
-                    giftsArr.push({ x: W + 50, y: top + currentGap / 2, col: false });
-                }
-            }
-
-            pipes.forEach((p, i) => {
-                p.x -= sp;
-                if (!p.passed && p.x + CONFIG.PIPES.WIDTH < player.x) {
-                    p.passed = true;
-                    score++;
-                    $('hudScore').textContent = score;
-                    sound.play('score');
-                    vibrate(25);
-                }
-                if (collision(p) && !shieldActive) gameOver();
-                if (p.x < -CONFIG.PIPES.WIDTH) pipes.splice(i, 1);
-            });
-        }
-
-        function updateGifts() {
-            const sp = CONFIG.PIPES.SPEED * speedMult;
-            giftsArr.forEach((g, i) => {
-                g.x -= sp;
-                if (!g.col) {
-                    const dx = player.x - g.x, dy = player.y - g.y;
-                    if (Math.sqrt(dx*dx + dy*dy) < 42) {
-                        g.col = true;
-                        gifts++;
-                        score += CONFIG.GIFTS.POINTS;
-                        $('hudScore').textContent = score;
-                        $('hudGifts').textContent = '🎁 ' + gifts;
-                        giftExplosion(g.x, g.y);
-                        activateShield();
-                        vibrate([40, 20, 40], 'success');
-                    }
-                }
-                if (g.x < -50 || g.col) giftsArr.splice(i, 1);
-            });
-        }
-
-        function updateDifficulty() {
-            if (speedMult < CONFIG.DIFFICULTY.MAX_SPEED) speedMult += CONFIG.DIFFICULTY.SPEED_INC;
-            if (currentGap > CONFIG.DIFFICULTY.MIN_GAP) currentGap -= CONFIG.DIFFICULTY.GAP_DEC;
-            $('hudSpeed').textContent = '⚡ x' + speedMult.toFixed(1);
-        }
-
-        function updateShield() {
-            if (shieldActive) {
-                shieldTimer--;
-                $('shieldFill').style.width = (shieldTimer / CONFIG.GIFTS.SHIELD * 100) + '%';
-                if (shieldTimer <= 0) {
-                    shieldActive = false;
-                    $('shieldBar').classList.remove('active');
-                }
-            }
-        }
-
-        function activateShield() {
-            shieldActive = true;
-            shieldTimer = CONFIG.GIFTS.SHIELD;
-            $('shieldBar').classList.add('active');
-            sound.play('gift');
-        }
-
-        function collision(p) {
-            const pl = player.x - 35, pr = player.x + 35;
-            const pt = player.y - 18, pb = player.y + 18;
-            if (pr > p.x && pl < p.x + CONFIG.PIPES.WIDTH) {
-                if (pt < p.top || pb > p.bot) return true;
-            }
-            return false;
-        }
-
-        // ==========================================
-        // LOOP
-        // ==========================================
-        function loop() {
-            drawBg();
-            drawSnow();
-            drawTrails();
-            drawPipes();
-            drawGifts();
-            drawPlayer();
-            drawParticles();
-
-            if (gameState === 'playing') {
-                updatePlayer();
-                updatePipes();
-                updateGifts();
-                updateDifficulty();
-                updateShield();
-            }
-            frameCount++;
-            requestAnimationFrame(loop);
+        function updateMenuStats() {
+            $('totalMoney').textContent = stats.money.toLocaleString();
+            $('totalRfq').textContent = stats.rfq;
+            $('totalParts').textContent = stats.parts;
+            $('totalGames').textContent = stats.games;
         }
 
         // ==========================================
         // EVENTS
         // ==========================================
-        canvas.addEventListener('click', () => { sound.init(); jump(); });
-        canvas.addEventListener('touchstart', e => { e.preventDefault(); sound.init(); jump(); });
-        document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); sound.init(); jump(); } });
+        canvas.addEventListener('click', jump);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); });
+        document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); jump(); } });
 
-        $('btnPlay').onclick = start;
-        $('btnLeaderboard').onclick = () => { showScreen('leaderboardScreen'); lb.render('lbList'); };
-        $('btnSettings').onclick = () => { showScreen('settingsScreen'); updateToggles(); };
+        $('btnPlay').onclick = showRfqScreen;
+        $('btnStartRfq').onclick = startGame;
+        $('btnSkipRfq').onclick = () => { currentRfq = null; startGame(); };
+        $('btnRetry').onclick = showRfqScreen;
+        $('btnHome').onclick = () => { showScreen('mainMenu'); updateMenuStats(); };
+        $('btnLeaderboard').onclick = () => alert('Скоро!');
 
-        $('lbBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
-        $('settingsBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
+        // ==========================================
+        // GAME LOOP
+        // ==========================================
+        function loop() {
+            drawBg();
+            drawObstacles();
+            drawParts();
+            drawPlayer();
+            drawParticles();
 
-        $('toggleSound').onclick = () => { settings.sound = !settings.sound; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
-        $('toggleVibration').onclick = () => { settings.vibration = !settings.vibration; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
-        $('btnReset').onclick = () => {
-            if (confirm('Сбросить весь прогресс?')) {
-                stats = { best: 0, gifts: 0, games: 0 };
-                localStorage.setItem('avsStats', JSON.stringify(stats));
-                localStorage.removeItem('avsLB');
-                updateStats();
-                alert('Прогресс сброшен');
+            if (gameState === 'playing') {
+                updatePlayer();
+                updateObstacles();
+                updateParts();
+                updateDifficulty();
             }
-        };
 
-        $('btnRetry').onclick = start;
-        $('btnHome').onclick = () => { showScreen('mainMenu'); updateStats(); };
+            updateParticles();
+            frameCount++;
+            requestAnimationFrame(loop);
+        }
 
         // ==========================================
         // INIT
         // ==========================================
-        initSnow();
-        createSnowflakes();
-        updateStats();
-        updateToggles();
+        updateMenuStats();
         loop();
     </script>
 </body>
