@@ -199,6 +199,25 @@
         .part-popup { position: absolute; pointer-events: none; font-size: 12px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.5); animation: partPop 1s ease-out forwards; z-index: 15; }
         @keyframes partPop { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-35px); } }
         @keyframes screenFlash { 0% { opacity: 0.3; } 100% { opacity: 0; } }
+
+        /* Leaderboard */
+        .lb-content { padding: 12px; }
+        .lb-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .lb-tab { flex: 1; padding: 10px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .lb-tab.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        .lb-list { display: flex; flex-direction: column; gap: 8px; }
+        .lb-loading, .lb-empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 13px; }
+        .lb-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; transition: all 0.2s; }
+        .lb-item.me { background: rgba(74,108,247,0.15); border-color: var(--accent-blue); }
+        .lb-rank { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border-radius: 8px; background: var(--bg-primary); color: var(--text-secondary); }
+        .lb-rank.gold { background: linear-gradient(135deg, #f0b90b, #d4a00a); color: #000; }
+        .lb-rank.silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); color: #000; }
+        .lb-rank.bronze { background: linear-gradient(135deg, #cd7f32, #b06c28); color: #fff; }
+        .lb-avatar { font-size: 24px; }
+        .lb-info { flex: 1; min-width: 0; }
+        .lb-name { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lb-stats { font-size: 9px; color: var(--text-secondary); margin-top: 2px; }
+        .lb-score { font-size: 14px; font-weight: 800; color: var(--accent-gold); }
     </style>
 </head>
 <body>
@@ -298,6 +317,18 @@
         </div>
     </div>
 
+    <!-- LEADERBOARD -->
+    <div class="screen" id="lbScreen">
+        <div class="screen-header"><button class="btn-back" id="lbBack">←</button><div class="screen-title">🏆 Лидерборд</div></div>
+        <div class="lb-content">
+            <div class="lb-tabs">
+                <button class="lb-tab active" data-tab="score">🏆 Рекорд</button>
+                <button class="lb-tab" data-tab="money">💰 Деньги</button>
+            </div>
+            <div class="lb-list" id="lbList"></div>
+        </div>
+    </div>
+
     <!-- RFQ -->
     <div class="screen" id="rfqScreen">
         <div class="rfq-content">
@@ -340,6 +371,12 @@
 </div>
 
 <script>
+// ==========================================
+// SUPABASE CONFIG
+// ==========================================
+const SUPABASE_URL = 'https://imqoksswffkufknkbofm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltcW9rc3N3ZmZrdWZrbmtib2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzE2ODYsImV4cCI6MjA4MzA0NzY4Nn0.wcH5yZGRSzIkE0qjb_IIDSt3S-q3ylsBLJPT3Of-T78';
+
 const PARTS = [
     { id:'oring', name:'O-Ring', icon:'⭕', rarity:'common', value:10, chance:0.20 },
     { id:'washer', name:'Washer', icon:'🔘', rarity:'common', value:20, chance:0.20 },
@@ -389,9 +426,150 @@ function resize() { W=Math.max(window.innerWidth,360); H=Math.max(window.innerHe
 resize(); window.addEventListener('resize',resize); setTimeout(resize,100);
 
 let tg = window.Telegram?.WebApp;
-if(tg){ tg.ready(); tg.expand(); if(tg.safeAreaInset) safeTop=Math.max(100,tg.safeAreaInset.top+50); document.documentElement.style.setProperty('--safe-top',safeTop+'px'); }
+let tgUser = { id: null, first_name: 'Пилот', last_name: '', username: '' };
+
+if(tg){ 
+    tg.ready(); 
+    tg.expand(); 
+    if(tg.safeAreaInset) safeTop=Math.max(100,tg.safeAreaInset.top+50); 
+    document.documentElement.style.setProperty('--safe-top',safeTop+'px');
+    
+    if(tg.initDataUnsafe?.user) {
+        const u = tg.initDataUnsafe.user;
+        tgUser = {
+            id: u.id,
+            first_name: u.first_name || 'Пилот',
+            last_name: u.last_name || '',
+            username: u.username || ''
+        };
+    }
+}
 
 function vibrate(t='light'){ if(tg?.HapticFeedback){ if(t==='success')tg.HapticFeedback.notificationOccurred('success'); else if(t==='error')tg.HapticFeedback.notificationOccurred('error'); else if(t==='heavy')tg.HapticFeedback.impactOccurred('heavy'); else tg.HapticFeedback.impactOccurred('light'); }}
+
+// ==========================================
+// LEADERBOARD API
+// ==========================================
+async function fetchLeaderboard(sortBy = 'best_score') {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=${sortBy}.desc&limit=50`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (res.ok) return await res.json();
+    } catch(e) { console.error('Leaderboard fetch error:', e); }
+    return [];
+}
+
+async function submitScore(score, earnedMoney) {
+    if (!tgUser.id) return; // Только для Telegram пользователей
+    
+    try {
+        // Сначала проверяем существует ли игрок
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}&select=*`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        
+        const existing = await checkRes.json();
+        
+        if (existing && existing.length > 0) {
+            // Игрок существует - обновляем только если новый рекорд выше
+            const current = existing[0];
+            const newBestScore = Math.max(current.best_score, score);
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    first_name: tgUser.first_name,
+                    last_name: tgUser.last_name,
+                    username: tgUser.username,
+                    best_score: newBestScore,
+                    total_money: current.total_money + earnedMoney,
+                    total_parts: stats.parts,
+                    total_games: stats.games,
+                    rfq_completed: stats.rfq,
+                    current_plane: stats.plane
+                })
+            });
+        } else {
+            // Новый игрок - создаём запись
+            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    telegram_id: tgUser.id,
+                    first_name: tgUser.first_name,
+                    last_name: tgUser.last_name,
+                    username: tgUser.username,
+                    best_score: score,
+                    total_money: earnedMoney,
+                    total_parts: stats.parts,
+                    total_games: stats.games,
+                    rfq_completed: stats.rfq,
+                    current_plane: stats.plane
+                })
+            });
+        }
+    } catch(e) { console.error('Submit score error:', e); }
+}
+
+let currentLbSort = 'best_score';
+
+async function renderLeaderboard(sortBy = currentLbSort) {
+    currentLbSort = sortBy;
+    const list = $('lbList');
+    list.innerHTML = '<div class="lb-loading">Загрузка...</div>';
+    
+    // Обновляем активный таб
+    document.querySelectorAll('.lb-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === (sortBy === 'best_score' ? 'score' : 'money'));
+    });
+    
+    const data = await fetchLeaderboard(sortBy);
+    
+    if (!data || data.length === 0) {
+        list.innerHTML = '<div class="lb-empty">Пока нет результатов.<br>Будь первым! 🚀</div>';
+        return;
+    }
+    
+    list.innerHTML = data.map((p, i) => {
+        const name = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Пилот';
+        const isMe = tgUser.id && p.telegram_id === tgUser.id;
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const planeIcon = (PLANES.find(pl => pl.id === p.current_plane) || PLANES[0]).icon;
+        const mainValue = sortBy === 'best_score' ? p.best_score.toLocaleString() : '$' + fmt(p.total_money);
+        
+        return `
+            <div class="lb-item ${isMe ? 'me' : ''}">
+                <div class="lb-rank ${rankClass}">${i + 1}</div>
+                <div class="lb-avatar">${planeIcon}</div>
+                <div class="lb-info">
+                    <div class="lb-name">${name}${isMe ? ' (вы)' : ''}</div>
+                    <div class="lb-stats">🎮 ${p.total_games} игр • 📦 ${p.total_parts} деталей</div>
+                </div>
+                <div class="lb-score">${mainValue}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Обработчики табов лидерборда
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('lb-tab')) {
+        const tab = e.target.dataset.tab;
+        renderLeaderboard(tab === 'score' ? 'best_score' : 'total_money');
+    }
+});
 
 function checkStreak(){ const today=new Date().toDateString(); if(!stats.lastPlay)stats.streak=1; else{ const diff=Math.floor((new Date(today)-new Date(stats.lastPlay))/(1000*60*60*24)); if(diff===1)stats.streak=Math.min(stats.streak+1,30); else if(diff>1)stats.streak=1; } stats.lastPlay=today; save(); }
 function streakBonus(){ if(stats.streak>=30)return 2; if(stats.streak>=14)return 1.5; if(stats.streak>=7)return 1.3; if(stats.streak>=3)return 1.15; return 1; }
@@ -409,7 +587,12 @@ function rfqDone(){ return rfq && rfq.parts.every(p=>rfqProg[p.id]>=p.qty); }
 
 function reset(){ W=canvas.width||400; H=canvas.height||700; player={x:CFG.PLAYER.X,y:H/2,v:0,rot:0}; obstacles=[]; items=[]; particles=[]; money=0; parts=0; frame=0; speed=1; shieldOn=has('shield'); shieldT=shieldOn?CFG.SHIELD:0; turboOn=false; turboT=0; newParts=[]; if(rfq){rfqProg={}; rfq.parts.forEach(p=>rfqProg[p.id]=0);} updHud(); }
 function start(){ resize(); reset(); state='playing'; show(null); $('hud').classList.add('visible'); $('aogBanner').classList.toggle('show',isAog); }
-function gameOver(){ state='over'; vibrate('error'); const done=rfqDone(); let earn=Math.floor(money*moneyMult()); if(done&&rfq){earn+=rfq.reward*(isAog?3:1); stats.rfq++;} stats.games++; stats.parts+=parts; stats.money+=earn; if(earn>stats.best)stats.best=earn; save(); $('goMoney').textContent=earn.toLocaleString(); $('goParts').textContent=parts; $('goBest').textContent='$'+fmt(stats.best); const el=$('goRfq'); if(rfq){el.className=done?'gameover-rfq success':'gameover-rfq failed'; $('goRfqText').textContent=done?`✅ RFQ #${rfq.num} +$${(rfq.reward*(isAog?3:1)).toLocaleString()}`:`❌ RFQ #${rfq.num} не выполнен`; el.style.display='block';}else{el.style.display='none';} if(newParts.length){$('goNew').style.display='block'; $('goNewIcons').innerHTML=newParts.map(p=>`<span>${p.icon}</span>`).join('');}else{$('goNew').style.display='none';} $('hud').classList.remove('visible'); $('aogBanner').classList.remove('show'); show('gameoverScreen'); isAog=false; rfq=null; for(let i=0;i<20;i++)particles.push({x:player.x,y:player.y,vx:(Math.random()-0.5)*12,vy:(Math.random()-0.5)*12,size:Math.random()*5+2,color:`hsl(${Math.random()*60+10},100%,50%)`,life:1}); }
+function gameOver(){ state='over'; vibrate('error'); const done=rfqDone(); let earn=Math.floor(money*moneyMult()); if(done&&rfq){earn+=rfq.reward*(isAog?3:1); stats.rfq++;} stats.games++; stats.parts+=parts; stats.money+=earn; if(earn>stats.best)stats.best=earn; save(); 
+    
+    // Отправляем в лидерборд
+    submitScore(earn, earn);
+    
+    $('goMoney').textContent=earn.toLocaleString(); $('goParts').textContent=parts; $('goBest').textContent='$'+fmt(stats.best); const el=$('goRfq'); if(rfq){el.className=done?'gameover-rfq success':'gameover-rfq failed'; $('goRfqText').textContent=done?`✅ RFQ #${rfq.num} +$${(rfq.reward*(isAog?3:1)).toLocaleString()}`:`❌ RFQ #${rfq.num} не выполнен`; el.style.display='block';}else{el.style.display='none';} if(newParts.length){$('goNew').style.display='block'; $('goNewIcons').innerHTML=newParts.map(p=>`<span>${p.icon}</span>`).join('');}else{$('goNew').style.display='none';} $('hud').classList.remove('visible'); $('aogBanner').classList.remove('show'); show('gameoverScreen'); isAog=false; rfq=null; for(let i=0;i<20;i++)particles.push({x:player.x,y:player.y,vx:(Math.random()-0.5)*12,vy:(Math.random()-0.5)*12,size:Math.random()*5+2,color:`hsl(${Math.random()*60+10},100%,50%)`,life:1}); }
 function jump(){ if(state!=='playing')return; player.v=CFG.PLAYER.JUMP; vibrate('light'); }
 function turbo(){ if(!has('turbo')||turboOn)return; turboOn=true; turboT=CFG.TURBO; vibrate('heavy'); }
 
@@ -451,9 +634,10 @@ $('btnPlay').onclick=showRfq;
 $('btnAog').onclick=startAog;
 $('btnShop').onclick=()=>{renderShop();show('shopScreen');};
 $('btnCollection').onclick=()=>{renderColl();show('collectionScreen');};
-$('btnLeaderboard').onclick=()=>alert('Скоро!');
+$('btnLeaderboard').onclick=()=>{renderLeaderboard();show('lbScreen');};
 $('shopBack').onclick=()=>{show('mainMenu');updMenu();};
 $('collectionBack').onclick=()=>{show('mainMenu');updMenu();};
+$('lbBack').onclick=()=>{show('mainMenu');updMenu();};
 $('btnStartRfq').onclick=start;
 $('btnSkipRfq').onclick=()=>{rfq=null;start();};
 $('btnRetry').onclick=showRfq;
