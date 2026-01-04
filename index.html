@@ -1062,31 +1062,40 @@
                 this.saveLocal(name, score, gifts);
                 if (!this.enabled) return;
                 try {
-                    // Сначала проверяем текущий лучший счёт игрока
+                    // Проверяем текущий лучший счёт игрока
                     const check = await fetch(
                         `${SUPABASE_URL}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(name)}&select=score`,
                         { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
                     );
                     const existing = await check.json();
                     
-                    if (existing.length > 0 && existing[0].score >= score) {
-                        // Текущий счёт не лучше - не обновляем
-                        return;
+                    if (existing.length > 0) {
+                        // Запись есть - обновляем только если новый счёт выше
+                        if (score > existing[0].score) {
+                            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?player_name=eq.${encodeURIComponent(name)}`, {
+                                method: 'PATCH',
+                                headers: { 
+                                    'apikey': SUPABASE_KEY, 
+                                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ score, gifts })
+                            });
+                        }
+                    } else {
+                        // Записи нет - создаём новую
+                        await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+                            method: 'POST',
+                            headers: { 
+                                'apikey': SUPABASE_KEY, 
+                                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ player_name: name.substring(0, 50), score, gifts })
+                        });
                     }
-                    
-                    // Upsert - вставляем или обновляем
-                    await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
-                        method: 'POST',
-                        headers: { 
-                            'apikey': SUPABASE_KEY, 
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json', 
-                            'Prefer': 'resolution=merge-duplicates'
-                        },
-                        body: JSON.stringify({ player_name: name.substring(0, 50), score, gifts })
-                    });
                     this.lastFetch = 0;
-                } catch(e) {}
+                } catch(e) { console.error('Leaderboard error:', e); }
             }
             local() { 
                 return JSON.parse(localStorage.getItem('avsLB')) || []; 
