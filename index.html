@@ -26,7 +26,7 @@
             --text-tertiary: #5a6380;
             --border-color: rgba(255, 255, 255, 0.08);
             --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            --safe-top: 60px;
+            --safe-top: 100px;
         }
 
         * {
@@ -66,10 +66,11 @@
 
         #gameCanvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
+            max-height: 100%;
         }
 
         /* ============ HUD ============ */
@@ -909,12 +910,12 @@
         const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
         const SUPABASE_KEY = 'YOUR_ANON_KEY';
 
-        let W = window.innerWidth;
-        let H = window.innerHeight;
+        const W = 360;
+        const H = 640;
 
         const CONFIG = {
-            get CANVAS_WIDTH() { return W; },
-            get CANVAS_HEIGHT() { return H; },
+            CANVAS_WIDTH: W,
+            CANVAS_HEIGHT: H,
             PLAYER: { SIZE: 40, X: 80, JUMP: -7.5, GRAVITY: 0.35, MAX_V: 10 },
             PIPES: { WIDTH: 55, GAP: 190, SPEED: 3, SPAWN: 110, MIN_H: 80 },
             GIFTS: { SIZE: 35, CHANCE: 0.4, POINTS: 5, SHIELD: 180 },
@@ -941,15 +942,8 @@
         // ==========================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {
-            W = window.innerWidth;
-            H = window.innerHeight;
-            canvas.width = W;
-            canvas.height = H;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        canvas.width = W;
+        canvas.height = H;
 
         const bgImg = new Image();
         bgImg.onerror = () => { bgImg.failed = true; };
@@ -964,7 +958,7 @@
         // ==========================================
         let tg = window.Telegram?.WebApp;
         let playerName = 'Пилот';
-        let safeAreaTop = 60;
+        let safeAreaTop = 100;
         
         if (tg) {
             tg.ready();
@@ -972,10 +966,10 @@
             
             // Получаем safe area от Telegram
             if (tg.safeAreaInset) {
-                safeAreaTop = tg.safeAreaInset.top || 60;
+                safeAreaTop = Math.max(100, tg.safeAreaInset.top + 50);
             }
             if (tg.contentSafeAreaInset) {
-                safeAreaTop = Math.max(safeAreaTop, tg.contentSafeAreaInset.top || 0);
+                safeAreaTop = Math.max(safeAreaTop, tg.contentSafeAreaInset.top + 50);
             }
             
             // Применяем отступы
@@ -987,8 +981,6 @@
                 const lastName = user.last_name || '';
                 playerName = (firstName + ' ' + lastName).trim() || 'Пилот';
             }
-            
-            setTimeout(resizeCanvas, 100);
         }
 
         // ==========================================
@@ -1211,7 +1203,7 @@
         }
 
         function reset() {
-            player = { x: CONFIG.PLAYER.X, y: (H + safeAreaTop) / 2, v: 0, rot: 0 };
+            player = { x: CONFIG.PLAYER.X, y: H / 2, v: 0, rot: 0 };
             pipes = []; giftsArr = []; particles = []; trails = [];
             score = 0; gifts = 0; frameCount = 0;
             speedMult = 1.0; currentGap = CONFIG.PIPES.GAP;
@@ -1425,8 +1417,7 @@
             player.y += player.v;
             player.rot = Math.min(Math.max(player.v * 0.06, -0.4), 0.6);
 
-            const topLimit = safeAreaTop + 30;
-            if (player.y < topLimit) { player.y = topLimit; player.v = 0; }
+            if (player.y < 25) { player.y = 25; player.v = 0; }
             if (player.y > H - 60) {
                 if (!shieldActive) gameOver();
                 else { player.y = H - 60; player.v = CONFIG.PLAYER.JUMP; }
@@ -1438,7 +1429,7 @@
             const spawnRate = Math.floor(CONFIG.PIPES.SPAWN / speedMult);
 
             if (frameCount % spawnRate === 0) {
-                const minT = safeAreaTop + CONFIG.PIPES.MIN_H;
+                const minT = CONFIG.PIPES.MIN_H;
                 const maxT = H - currentGap - CONFIG.PIPES.MIN_H - 60;
                 const top = Math.random() * (maxT - minT) + minT;
                 pipes.push({ x: W, top, bot: top + currentGap, passed: false });
