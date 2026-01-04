@@ -827,12 +827,6 @@
                 <button class="btn-back" id="lbBack">←</button>
                 <div class="screen-title">Лидерборд</div>
             </div>
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button class="tab active" id="tabGlobal">🌐 Мировой</button>
-                    <button class="tab" id="tabLocal">📱 Локальный</button>
-                </div>
-            </div>
             <div class="leaderboard-list" id="lbList">
                 <div class="lb-empty">Загрузка...</div>
             </div>
@@ -951,7 +945,12 @@
         if (tg) {
             tg.ready();
             tg.expand();
-            if (tg.initDataUnsafe?.user?.first_name) playerName = tg.initDataUnsafe.user.first_name;
+            if (tg.initDataUnsafe?.user) {
+                const user = tg.initDataUnsafe.user;
+                const firstName = user.first_name || '';
+                const lastName = user.last_name || '';
+                playerName = (firstName + ' ' + lastName).trim() || 'Пилот';
+            }
         }
 
         // ==========================================
@@ -1041,10 +1040,10 @@
                 s.sort((a, b) => b.score - a.score);
                 localStorage.setItem('avsLB', JSON.stringify(s.slice(0, 20)));
             }
-            async render(el, local = false) {
+            async render(el) {
                 const c = document.getElementById(el);
                 c.innerHTML = '<div class="lb-empty">Загрузка...</div>';
-                const data = local ? this.local() : await this.fetch();
+                const data = await this.fetch();
                 if (!data.length) { c.innerHTML = '<div class="lb-empty">Пока нет результатов</div>'; return; }
                 c.innerHTML = data.slice(0, 10).map((e, i) => {
                     const name = e.player_name || 'Пилот';
@@ -1440,16 +1439,12 @@
         $('lbBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
         $('settingsBack').onclick = () => { showScreen('mainMenu'); updateStats(); };
 
-        $('tabGlobal').onclick = () => { $('tabGlobal').classList.add('active'); $('tabLocal').classList.remove('active'); lb.render('lbList'); };
-        $('tabLocal').onclick = () => { $('tabLocal').classList.add('active'); $('tabGlobal').classList.remove('active'); lb.render('lbList', true); };
-
         $('toggleSound').onclick = () => { settings.sound = !settings.sound; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
         $('toggleVibration').onclick = () => { settings.vibration = !settings.vibration; localStorage.setItem('avsSettings', JSON.stringify(settings)); updateToggles(); };
         $('btnReset').onclick = () => {
             if (confirm('Сбросить весь прогресс?')) {
                 stats = { best: 0, gifts: 0, games: 0 };
                 localStorage.setItem('avsStats', JSON.stringify(stats));
-                localStorage.removeItem('avsLB');
                 updateStats();
                 alert('Прогресс сброшен');
             }
