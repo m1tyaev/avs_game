@@ -725,8 +725,8 @@
         // ==========================================
         // CONFIG
         // ==========================================
-        let W = window.innerWidth;
-        let H = window.innerHeight;
+        let W = 400;
+        let H = 700;
         let safeAreaTop = 100;
 
         const PARTS_DATA = [
@@ -753,7 +753,7 @@
         const CLIENTS = ['Aeroflot', 'Emirates', 'Lufthansa', 'Air France', 'British Airways', 'Qatar Airways', 'S7 Airlines', 'Utair'];
 
         const CONFIG = {
-            PLAYER: { X: 80, SIZE: 40, JUMP: -9, GRAVITY: 0.4, MAX_V: 12 },
+            PLAYER: { X: 120, SIZE: 40, JUMP: -10, GRAVITY: 0.45, MAX_V: 12 },
             OBSTACLES: { WIDTH: 65, GAP: 220, SPEED: 3.5, SPAWN: 130, MIN_H: 100 },
             PARTS: { SIZE: 40, SPAWN_RATE: 60 },
             DIFFICULTY: { SPEED_INC: 0.0003, MAX_SPEED: 2.5 }
@@ -767,7 +767,8 @@
 
         let stats = JSON.parse(localStorage.getItem('avrStats')) || { money: 0, rfq: 0, parts: 0, games: 0, best: 0 };
 
-        let player = { x: CONFIG.PLAYER.X, y: H / 2, v: 0, rot: 0 };
+        // Player будет инициализирован в reset()
+        let player = { x: 0, y: 0, v: 0, rot: 0 };
         let obstacles = [], parts = [], particles = [];
 
         let currentRfq = null;
@@ -780,13 +781,21 @@
         const ctx = canvas.getContext('2d');
 
         function resize() {
-            W = window.innerWidth;
-            H = window.innerHeight;
+            const rect = canvas.getBoundingClientRect();
+            W = Math.max(rect.width || window.innerWidth || 0, 360);
+            H = Math.max(rect.height || window.innerHeight || 0, 640);
             canvas.width = W;
             canvas.height = H;
         }
+        
+        // Первоначальный resize
         resize();
+        
+        // Вызываем resize после полной загрузки
+        setTimeout(resize, 100);
         window.addEventListener('resize', resize);
+        document.addEventListener('DOMContentLoaded', () => setTimeout(resize, 100));
+        window.addEventListener('load', () => setTimeout(resize, 100));
 
         // ==========================================
         // TELEGRAM
@@ -898,7 +907,20 @@
         // GAME
         // ==========================================
         function reset() {
-            player = { x: CONFIG.PLAYER.X, y: (safeAreaTop + H) / 2, v: 0, rot: 0 };
+            // Гарантируем минимальные размеры
+            if (W < 100 || H < 100) {
+                resize();
+            }
+            
+            // Центрируем игрока - используем жёсткие значения если размеры неизвестны
+            const safeH = Math.max(H, 640);
+            const safeW = Math.max(W, 360);
+            
+            player.x = 120;
+            player.y = safeH / 2;
+            player.v = 0;
+            player.rot = 0;
+            
             obstacles = [];
             parts = [];
             particles = [];
@@ -919,7 +941,43 @@
         }
 
         function startGame() {
-            reset();
+            // Получаем размеры разными способами
+            const rect = canvas.getBoundingClientRect();
+            W = rect.width || window.innerWidth || 400;
+            H = rect.height || window.innerHeight || 700;
+            
+            // Минимальные размеры
+            if (W < 300) W = 400;
+            if (H < 400) H = 700;
+            
+            canvas.width = W;
+            canvas.height = H;
+            
+            // ЖЁСТКО ставим игрока в центр
+            player.x = 120;
+            player.y = Math.round(H / 2);
+            player.v = 0;
+            player.rot = 0;
+            
+            // Сбрасываем остальное
+            obstacles = [];
+            parts = [];
+            particles = [];
+            money = 0;
+            partsCollected = 0;
+            frameCount = 0;
+            speedMult = 1.0;
+
+            if (currentRfq) {
+                rfqProgress = {};
+                currentRfq.parts.forEach(p => rfqProgress[p.name] = 0);
+            }
+
+            document.getElementById('hudMoney').textContent = '0';
+            document.getElementById('hudParts').textContent = '📦 0';
+            document.getElementById('hudSpeed').textContent = '⚡ x1.0';
+            updateHudRfq();
+            
             gameState = 'playing';
             showScreen(null);
             document.getElementById('hud').classList.add('visible');
@@ -1041,17 +1099,17 @@
         // UPDATE
         // ==========================================
         function updatePlayer() {
-            player.v += CONFIG.GRAVITY;
+            player.v += CONFIG.PLAYER.GRAVITY;
             player.v = Math.min(player.v, CONFIG.PLAYER.MAX_V);
             player.y += player.v;
             player.rot = Math.min(Math.max(player.v * 0.05, -0.4), 0.6);
 
-            // Boundaries
-            if (player.y < safeAreaTop + 30) {
-                player.y = safeAreaTop + 30;
+            // Границы
+            if (player.y < safeAreaTop + 40) {
+                player.y = safeAreaTop + 40;
                 player.v = 0;
             }
-            if (player.y > H - 60) {
+            if (player.y > H - 80) {
                 gameOver();
             }
         }
@@ -1339,6 +1397,18 @@
         }
 
         function drawPlayer() {
+            // Получаем актуальные размеры
+            const currentH = canvas.height || H || 700;
+            const currentW = canvas.width || W || 400;
+            
+            // Если игрок вне экрана - ставим в центр
+            if (player.y < 50 || player.y > currentH - 50 || isNaN(player.y)) {
+                player.y = currentH / 2;
+            }
+            if (player.x < 50 || player.x > currentW - 50 || isNaN(player.x)) {
+                player.x = 120;
+            }
+            
             ctx.save();
             ctx.translate(player.x, player.y);
             
@@ -1841,10 +1911,20 @@
         // GAME LOOP
         // ==========================================
         function loop() {
+            // Проверяем размеры canvas
+            if (canvas.width < 100 || canvas.height < 100) {
+                resize();
+            }
+            
             drawBg();
-            drawObstacles();
-            drawParts();
-            drawPlayer();
+            
+            // Рисуем игровые объекты только во время игры или game over
+            if (gameState === 'playing' || gameState === 'over') {
+                drawObstacles();
+                drawParts();
+                drawPlayer();
+            }
+            
             drawParticles();
 
             if (gameState === 'playing') {
