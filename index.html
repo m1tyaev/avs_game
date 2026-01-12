@@ -4,352 +4,1553 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0a0b14">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="manifest.json">
-    <title>Aviation Parts Runner — Aviation Service</title>
+    <title>Aviation Parts Runner v4.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-primary:#0a0b14; --bg-card:#1a1c2e; --accent-blue:#4a6cf7; --accent-gold:#f0b90b; --accent-red:#e74c3c; --accent-green:#2ecc71; --accent-cyan:#00d4ff; --accent-purple:#9b59b6; --text-primary:#fff; --text-secondary:#8892b0; --border-color:rgba(255,255,255,0.08); --safe-top:100px; }
+        :root {
+            --bg-primary: #0a0b14;
+            --bg-card: #1a1c2e;
+            --bg-card-hover: #242640;
+            --accent-blue: #4a6cf7;
+            --accent-gold: #f0b90b;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #9b59b6;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #f39c12;
+            --text-primary: #ffffff;
+            --text-secondary: #8892b0;
+            --border-color: rgba(255,255,255,0.08);
+            --safe-top: 100px;
+            --glow-blue: 0 0 20px rgba(74,108,247,0.5);
+            --glow-gold: 0 0 20px rgba(240,185,11,0.5);
+            --glow-cyan: 0 0 20px rgba(0,212,255,0.5);
+        }
         * { margin:0; padding:0; box-sizing:border-box; }
-        html,body { width:100%; height:100%; background:var(--bg-primary); font-family:'Inter',sans-serif; overflow:hidden; touch-action:manipulation; user-select:none; }
-        .game-container { position:fixed; top:0; left:0; width:100%; height:100%; }
+        html,body { width:100%; height:100%; background:#000; font-family:'Inter',sans-serif; overflow:hidden; touch-action:manipulation; user-select:none; }
+        .game-container { position:fixed; top:0; left:0; width:100%; height:100%; background:#000; }
         #gameCanvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+
+        /* HUD */
         .hud { position:absolute; top:0; left:0; width:100%; padding:calc(var(--safe-top) + 5px) 12px 12px; pointer-events:none; z-index:10; opacity:0; transition:opacity 0.3s; }
         .hud.visible { opacity:1; }
         .hud-top { display:flex; justify-content:space-between; gap:8px; }
-        .hud-left,.hud-right { display:flex; flex-direction:column; gap:4px; }
-        .hud-box { background:rgba(0,0,0,0.7); padding:5px 10px; border-radius:12px; font-size:12px; font-weight:600; }
-        .hud-money { color:var(--accent-gold); font-size:14px; }
-        .hud-streak { color:var(--accent-green); font-size:10px; }
-        .hud-center { flex:1; max-width:130px; }
-        .hud-rfq { background:rgba(0,0,0,0.7); padding:5px 8px; border-radius:8px; }
-        .hud-rfq-title { font-size:8px; color:var(--accent-cyan); text-transform:uppercase; margin-bottom:2px; }
-        .hud-rfq-items { display:flex; flex-wrap:wrap; gap:2px; }
-        .hud-rfq-item { font-size:8px; padding:2px 4px; border-radius:3px; background:rgba(255,255,255,0.1); color:var(--text-secondary); }
-        .hud-rfq-item.done { background:var(--accent-green); color:#000; }
+        .hud-left, .hud-right { display:flex; flex-direction:column; gap:4px; }
+        .hud-box { background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); padding:6px 12px; border-radius:12px; font-size:12px; font-weight:600; border:1px solid rgba(255,255,255,0.1); }
+        .hud-money { color:var(--accent-gold); font-size:14px; text-shadow:var(--glow-gold); }
+        .hud-xp { color:var(--accent-cyan); font-size:10px; }
+        .hud-xp-bar { width:60px; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; margin-top:3px; overflow:hidden; }
+        .hud-xp-fill { height:100%; background:linear-gradient(90deg,var(--accent-cyan),var(--accent-blue)); transition:width 0.3s; }
+        .hud-center { flex:1; max-width:140px; }
+        .hud-mission { background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); padding:6px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); }
+        .hud-mission-title { font-size:8px; color:var(--accent-cyan); text-transform:uppercase; margin-bottom:3px; }
+        .hud-mission-text { font-size:9px; color:var(--text-primary); }
+        .hud-mission-progress { height:3px; background:rgba(255,255,255,0.2); border-radius:2px; margin-top:4px; overflow:hidden; }
+        .hud-mission-fill { height:100%; background:var(--accent-green); transition:width 0.3s; }
         .hud-powerups { display:flex; gap:4px; margin-top:4px; }
-        .hud-pw { width:28px; height:28px; background:rgba(0,0,0,0.7); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; opacity:0.4; }
-        .hud-pw.active { opacity:1; border:2px solid var(--accent-cyan); }
-        .weather-ind { position:absolute; top:calc(var(--safe-top) + 55px); right:12px; background:rgba(0,0,0,0.7); padding:4px 8px; border-radius:8px; font-size:10px; color:var(--text-secondary); z-index:11; display:none; align-items:center; gap:4px; }
-        .weather-ind.show { display:flex; }
-        .aog-banner { position:absolute; top:calc(var(--safe-top) + 55px); left:50%; transform:translateX(-50%); background:linear-gradient(135deg,var(--accent-red),#c0392b); padding:6px 16px; border-radius:16px; display:none; align-items:center; gap:8px; animation:aogPulse 1s infinite; z-index:15; }
-        .aog-banner.show { display:flex; }
-        @keyframes aogPulse { 0%,100% { box-shadow:0 0 0 0 rgba(231,76,60,0.6); } 50% { box-shadow:0 0 15px 3px rgba(231,76,60,0.3); } }
-        .shield-bar { position:absolute; bottom:70px; left:50%; transform:translateX(-50%); background:rgba(0,212,255,0.2); border:1px solid rgba(0,212,255,0.4); padding:5px 12px; border-radius:16px; display:none; align-items:center; gap:6px; z-index:15; }
-        .shield-bar.show { display:flex; }
-        .shield-fill-bg { width:70px; height:5px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden; }
-        .shield-fill { height:100%; background:var(--accent-cyan); transition:width 0.1s; }
+        .hud-pw { width:30px; height:30px; background:rgba(0,0,0,0.8); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; opacity:0.4; border:1px solid rgba(255,255,255,0.1); }
+        .hud-pw.active { opacity:1; border-color:var(--accent-cyan); box-shadow:var(--glow-cyan); }
+
+        /* Boss HP Bar */
+        .boss-hud { position:absolute; top:calc(var(--safe-top) + 60px); left:50%; transform:translateX(-50%); width:80%; max-width:300px; display:none; z-index:15; }
+        .boss-hud.show { display:block; animation:bossAppear 0.5s ease; }
+        @keyframes bossAppear { from { opacity:0; transform:translateX(-50%) scale(0.8); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+        .boss-name { font-size:12px; font-weight:800; color:var(--accent-red); text-align:center; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px; text-shadow:0 0 10px rgba(231,76,60,0.8); }
+        .boss-hp-bar { height:12px; background:rgba(0,0,0,0.8); border-radius:6px; overflow:hidden; border:2px solid var(--accent-red); }
+        .boss-hp-fill { height:100%; background:linear-gradient(90deg,#e74c3c,#c0392b); transition:width 0.3s; }
+        .boss-hp-text { font-size:10px; color:var(--text-primary); text-align:center; margin-top:4px; }
+
+        /* Screens */
         .screen { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; z-index:20; opacity:0; pointer-events:none; transition:opacity 0.3s; overflow-y:auto; background:var(--bg-primary); }
         .screen.active { opacity:1; pointer-events:auto; }
-        .screen-header { display:flex; align-items:center; padding:calc(var(--safe-top) + 5px) 16px 10px; background:var(--bg-primary); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:5; }
-        .btn-back { width:32px; height:32px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; color:var(--text-primary); font-size:14px; cursor:pointer; }
-        .screen-title { flex:1; text-align:center; font-size:14px; font-weight:700; color:var(--text-primary); margin-right:32px; }
-        .main-menu { background:linear-gradient(180deg,var(--bg-primary),#12131f); }
+        .screen-header { display:flex; align-items:center; padding:calc(var(--safe-top) + 5px) 16px 12px; background:rgba(10,11,20,0.95); backdrop-filter:blur(20px); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:5; }
+        .btn-back { width:36px; height:36px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; color:var(--text-primary); font-size:16px; cursor:pointer; transition:all 0.2s; }
+        .btn-back:hover { background:var(--bg-card-hover); }
+        .screen-title { flex:1; text-align:center; font-size:16px; font-weight:800; color:var(--text-primary); margin-right:36px; }
+
+        /* Main Menu */
+        .main-menu { background:linear-gradient(180deg,#0a0b14 0%,#12131f 50%,#1a1c2e 100%); }
         .menu-content { padding:calc(var(--safe-top) + 5px) 16px 20px; display:flex; flex-direction:column; align-items:center; }
-        .logo-badge { background:linear-gradient(135deg,var(--accent-blue),#3451d1); padding:4px 10px; border-radius:10px; font-size:8px; font-weight:700; color:white; text-transform:uppercase; margin-bottom:4px; }
-        .logo-title { font-size:20px; font-weight:900; color:var(--text-primary); text-align:center; line-height:1.1; }
-        .logo-subtitle { font-size:9px; font-weight:600; color:var(--accent-blue); text-transform:uppercase; letter-spacing:2px; margin-top:2px; }
-        .wallet-card { width:100%; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin:10px 0; }
-        .wallet-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-        .wallet-amount { font-size:22px; font-weight:800; color:var(--accent-gold); }
-        .wallet-streak { background:rgba(46,204,113,0.15); border:1px solid rgba(46,204,113,0.3); padding:3px 8px; border-radius:8px; font-size:9px; font-weight:600; color:var(--accent-green); }
-        .wallet-stats { display:flex; gap:6px; padding-top:8px; border-top:1px solid var(--border-color); }
-        .wallet-stat { flex:1; text-align:center; padding:6px 2px; background:rgba(0,0,0,0.2); border-radius:6px; }
-        .wallet-stat-value { font-size:12px; font-weight:700; color:var(--text-primary); }
-        .wallet-stat-label { font-size:7px; color:var(--text-secondary); text-transform:uppercase; margin-top:1px; }
-        .menu-buttons { width:100%; display:flex; flex-direction:column; gap:6px; }
-        .btn { display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 14px; font-family:inherit; font-size:12px; font-weight:700; color:var(--text-primary); border:none; border-radius:10px; cursor:pointer; text-transform:uppercase; }
-        .btn:active { transform:scale(0.98); }
-        .btn-primary { background:linear-gradient(135deg,var(--accent-blue),#3451d1); }
+        .logo-badge { background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple)); padding:5px 12px; border-radius:12px; font-size:9px; font-weight:800; color:white; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; box-shadow:0 4px 15px rgba(155,89,182,0.4); }
+        .logo-title { font-size:24px; font-weight:900; color:var(--text-primary); text-align:center; line-height:1.1; text-shadow:0 0 30px rgba(74,108,247,0.5); }
+        .logo-subtitle { font-size:10px; font-weight:600; color:var(--accent-blue); text-transform:uppercase; letter-spacing:3px; margin-top:4px; }
+
+        /* Stats Card */
+        .stats-card { width:100%; background:linear-gradient(135deg,rgba(74,108,247,0.15),rgba(155,89,182,0.1)); border:1px solid rgba(74,108,247,0.3); border-radius:16px; padding:14px; margin:12px 0; }
+        .stats-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .stats-money { font-size:26px; font-weight:900; color:var(--accent-gold); text-shadow:var(--glow-gold); }
+        .stats-level { display:flex; align-items:center; gap:6px; background:rgba(0,212,255,0.2); padding:4px 10px; border-radius:10px; }
+        .stats-level-num { font-size:14px; font-weight:800; color:var(--accent-cyan); }
+        .stats-level-text { font-size:8px; color:var(--text-secondary); text-transform:uppercase; }
+        .stats-xp-bar { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin:8px 0; overflow:hidden; }
+        .stats-xp-fill { height:100%; background:linear-gradient(90deg,var(--accent-cyan),var(--accent-blue),var(--accent-purple)); transition:width 0.5s; }
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .stats-item { text-align:center; padding:8px 4px; background:rgba(0,0,0,0.3); border-radius:10px; }
+        .stats-item-value { font-size:14px; font-weight:800; color:var(--text-primary); }
+        .stats-item-label { font-size:7px; color:var(--text-secondary); text-transform:uppercase; margin-top:2px; }
+
+        /* Buttons */
+        .menu-buttons { width:100%; display:flex; flex-direction:column; gap:8px; }
+        .btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px 18px; font-family:inherit; font-size:13px; font-weight:700; color:var(--text-primary); border:none; border-radius:14px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; transition:all 0.2s; }
+        .btn:active { transform:scale(0.97); }
+        .btn-primary { background:linear-gradient(135deg,var(--accent-blue),#3451d1); box-shadow:0 4px 20px rgba(74,108,247,0.4); }
+        .btn-primary:hover { box-shadow:0 6px 30px rgba(74,108,247,0.6); }
         .btn-secondary { background:var(--bg-card); border:1px solid var(--border-color); }
-        .btn-aog { background:linear-gradient(135deg,var(--accent-red),#c0392b); animation:aogPulse 2s infinite; }
-        .btn-gold { background:linear-gradient(135deg,var(--accent-gold),#d4a00a); color:#000; }
-        .btn-invite { background:linear-gradient(135deg,var(--accent-cyan),#0099cc); }
-        .menu-row { display:flex; gap:6px; width:100%; }
-        .menu-row .btn { flex:1; font-size:10px; padding:10px 6px; }
-        .menu-footer { margin-top:auto; padding-top:12px; text-align:center; font-size:8px; color:var(--text-secondary); }
+        .btn-pvp { background:linear-gradient(135deg,var(--accent-orange),#e67e22); box-shadow:0 4px 20px rgba(243,156,18,0.4); }
+        .btn-boss { background:linear-gradient(135deg,var(--accent-red),#c0392b); box-shadow:0 4px 20px rgba(231,76,60,0.4); animation:pulseRed 2s infinite; }
+        @keyframes pulseRed { 0%,100% { box-shadow:0 4px 20px rgba(231,76,60,0.4); } 50% { box-shadow:0 4px 30px rgba(231,76,60,0.7); } }
+        .btn-battlepass { background:linear-gradient(135deg,var(--accent-purple),var(--accent-pink)); box-shadow:0 4px 20px rgba(155,89,182,0.4); }
+        .btn-gold { background:linear-gradient(135deg,var(--accent-gold),#d4a00a); color:#000; box-shadow:0 4px 20px rgba(240,185,11,0.4); }
+        .menu-row { display:flex; gap:8px; width:100%; }
+        .menu-row .btn { flex:1; font-size:11px; padding:12px 8px; }
+        .menu-footer { margin-top:auto; padding-top:14px; text-align:center; font-size:9px; color:var(--text-secondary); }
         .menu-footer a { color:var(--accent-blue); text-decoration:none; }
-        .shop-content,.collection-content,.achievements-content { padding:12px; }
-        .shop-section { margin-bottom:16px; }
-        .shop-section-title { font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:8px; padding-left:4px; }
-        .shop-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-        .shop-item { background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px; text-align:center; cursor:pointer; }
-        .shop-item.owned { border-color:var(--accent-green); background:rgba(46,204,113,0.1); }
-        .shop-item-icon { font-size:28px; margin-bottom:4px; }
-        .shop-item-name { font-size:11px; font-weight:600; color:var(--text-primary); }
-        .shop-item-desc { font-size:8px; color:var(--text-secondary); margin:2px 0 4px; }
-        .shop-item-price { font-size:11px; font-weight:700; color:var(--accent-gold); }
-        .shop-item-price.owned { color:var(--accent-green); }
-        .plane-item { display:flex; align-items:center; gap:10px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px; margin-bottom:8px; cursor:pointer; }
-        .plane-item.owned { border-color:var(--accent-green); }
-        .plane-item.selected { border-color:var(--accent-gold); border-width:2px; }
-        .plane-icon { font-size:30px; }
-        .plane-info { flex:1; }
-        .plane-name { font-size:12px; font-weight:600; color:var(--text-primary); }
-        .plane-stats { font-size:9px; color:var(--text-secondary); }
-        .plane-price { font-size:12px; font-weight:700; color:var(--accent-gold); }
-        .plane-price.owned { color:var(--accent-green); }
-        .collection-progress { background:var(--bg-card); border-radius:10px; padding:12px; margin-bottom:12px; text-align:center; }
-        .collection-progress-text { font-size:11px; color:var(--text-secondary); margin-bottom:6px; }
-        .collection-progress-bar { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
-        .collection-progress-fill { height:100%; background:linear-gradient(90deg,var(--accent-blue),var(--accent-cyan)); transition:width 0.3s; }
-        .collection-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-        .collection-item { background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px 6px; text-align:center; }
-        .collection-item.found { border-color:var(--accent-green); }
-        .collection-item.locked { opacity:0.5; }
-        .collection-item-icon { font-size:24px; margin-bottom:2px; }
-        .collection-item-name { font-size:8px; color:var(--text-primary); font-weight:600; }
-        .collection-item-rarity { font-size:7px; text-transform:uppercase; }
-        .text-common { color:#9ca3af; } .text-uncommon { color:var(--accent-green); } .text-rare { color:var(--accent-blue); } .text-epic { color:var(--accent-purple); } .text-legendary { color:var(--accent-gold); }
-        .rarity-common { background:#4a4a4a; } .rarity-uncommon { background:#27ae60; } .rarity-rare { background:#3498db; } .rarity-epic { background:#9b59b6; } .rarity-legendary { background:linear-gradient(135deg,#f39c12,#e67e22); }
-        .achievement-item { display:flex; align-items:center; gap:10px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:10px; margin-bottom:8px; }
-        .achievement-item.unlocked { border-color:var(--accent-gold); background:rgba(240,185,11,0.1); }
-        .achievement-item.locked { opacity:0.6; }
-        .achievement-icon { font-size:28px; }
-        .achievement-info { flex:1; }
-        .achievement-name { font-size:12px; font-weight:600; color:var(--text-primary); }
-        .achievement-desc { font-size:9px; color:var(--text-secondary); margin-top:2px; }
-        .achievement-progress { margin-top:4px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
-        .achievement-progress-fill { height:100%; background:var(--accent-gold); }
-        .achievement-reward { font-size:11px; font-weight:700; color:var(--accent-gold); }
-        #lbScreen { background:var(--bg-primary); min-height:100%; }
+
+        /* Daily Missions */
+        .missions-card { width:100%; background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:12px; margin-bottom:10px; }
+        .missions-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .missions-title { font-size:11px; font-weight:700; color:var(--accent-cyan); text-transform:uppercase; }
+        .missions-timer { font-size:10px; color:var(--text-secondary); }
+        .mission-item { display:flex; align-items:center; gap:10px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:6px; }
+        .mission-item.completed { opacity:0.6; }
+        .mission-icon { font-size:20px; }
+        .mission-info { flex:1; }
+        .mission-name { font-size:11px; font-weight:600; color:var(--text-primary); }
+        .mission-progress { height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-top:4px; overflow:hidden; }
+        .mission-progress-fill { height:100%; background:var(--accent-green); transition:width 0.3s; }
+        .mission-reward { font-size:11px; font-weight:700; color:var(--accent-gold); }
+
+        /* Battle Pass */
+        .bp-content { padding:12px; }
+        .bp-header { background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(255,107,157,0.1)); border:1px solid rgba(155,89,182,0.3); border-radius:14px; padding:14px; margin-bottom:14px; text-align:center; }
+        .bp-season { font-size:10px; color:var(--accent-pink); text-transform:uppercase; letter-spacing:2px; }
+        .bp-title { font-size:18px; font-weight:900; color:var(--text-primary); margin:4px 0; }
+        .bp-progress { display:flex; align-items:center; gap:10px; margin-top:10px; }
+        .bp-level { font-size:20px; font-weight:900; color:var(--accent-purple); }
+        .bp-bar { flex:1; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; }
+        .bp-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent-purple),var(--accent-pink)); }
+        .bp-xp { font-size:10px; color:var(--text-secondary); }
+        .bp-tiers { display:flex; flex-direction:column; gap:8px; }
+        .bp-tier { display:flex; align-items:center; gap:12px; padding:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; }
+        .bp-tier.unlocked { border-color:var(--accent-green); background:rgba(46,204,113,0.1); }
+        .bp-tier.current { border-color:var(--accent-purple); background:rgba(155,89,182,0.1); }
+        .bp-tier.premium { border-color:var(--accent-gold); }
+        .bp-tier-num { width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; background:var(--bg-primary); border-radius:8px; color:var(--text-secondary); }
+        .bp-tier.unlocked .bp-tier-num { background:var(--accent-green); color:#000; }
+        .bp-tier.current .bp-tier-num { background:var(--accent-purple); color:#fff; }
+        .bp-tier-rewards { flex:1; display:flex; gap:8px; }
+        .bp-reward { display:flex; flex-direction:column; align-items:center; padding:6px 10px; background:rgba(0,0,0,0.3); border-radius:8px; }
+        .bp-reward.premium { background:rgba(240,185,11,0.15); border:1px solid rgba(240,185,11,0.3); }
+        .bp-reward-icon { font-size:18px; }
+        .bp-reward-text { font-size:8px; color:var(--text-secondary); margin-top:2px; }
+        .bp-reward.claimed .bp-reward-icon { opacity:0.5; }
+
+        /* PvP */
+        .pvp-content { padding:12px; }
+        .pvp-header { background:linear-gradient(135deg,rgba(243,156,18,0.2),rgba(230,126,34,0.1)); border:1px solid rgba(243,156,18,0.3); border-radius:14px; padding:14px; margin-bottom:14px; text-align:center; }
+        .pvp-title { font-size:16px; font-weight:900; color:var(--accent-orange); margin-bottom:4px; }
+        .pvp-subtitle { font-size:11px; color:var(--text-secondary); }
+        .pvp-stats { display:flex; justify-content:center; gap:20px; margin-top:10px; }
+        .pvp-stat { text-align:center; }
+        .pvp-stat-value { font-size:18px; font-weight:800; color:var(--text-primary); }
+        .pvp-stat-label { font-size:9px; color:var(--text-secondary); text-transform:uppercase; }
+        .pvp-opponent { display:flex; align-items:center; gap:12px; padding:14px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; margin-bottom:10px; }
+        .pvp-opponent-avatar { width:50px; height:50px; background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; }
+        .pvp-opponent-info { flex:1; }
+        .pvp-opponent-name { font-size:14px; font-weight:700; color:var(--text-primary); }
+        .pvp-opponent-score { font-size:12px; color:var(--accent-gold); margin-top:2px; }
+        .pvp-opponent-level { font-size:10px; color:var(--text-secondary); }
+
+        /* Boss Mode */
+        .boss-content { padding:12px; text-align:center; }
+        .boss-preview { width:120px; height:120px; margin:20px auto; background:radial-gradient(circle,rgba(231,76,60,0.3),transparent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:60px; animation:bossFloat 3s ease-in-out infinite; }
+        @keyframes bossFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+        .boss-info { margin:20px 0; }
+        .boss-info-name { font-size:20px; font-weight:900; color:var(--accent-red); text-transform:uppercase; }
+        .boss-info-desc { font-size:12px; color:var(--text-secondary); margin-top:6px; }
+        .boss-rewards { display:flex; justify-content:center; gap:20px; margin:20px 0; }
+        .boss-reward-item { text-align:center; }
+        .boss-reward-icon { font-size:28px; }
+        .boss-reward-text { font-size:10px; color:var(--accent-gold); margin-top:4px; }
+
+        /* Game Over */
+        .gameover-screen { background:linear-gradient(180deg,rgba(10,11,20,0.98),rgba(18,19,31,0.99)); justify-content:center; align-items:center; padding:24px; }
+        .gameover-icon { font-size:50px; margin-bottom:10px; }
+        .gameover-title { font-size:14px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:2px; }
+        .gameover-money { font-size:48px; font-weight:900; color:var(--accent-gold); text-shadow:var(--glow-gold); margin:6px 0; }
+        .gameover-xp { font-size:14px; color:var(--accent-cyan); margin-bottom:16px; }
+        .gameover-boss { background:rgba(231,76,60,0.2); border:1px solid rgba(231,76,60,0.4); border-radius:12px; padding:12px 20px; margin-bottom:14px; }
+        .gameover-boss-text { font-size:13px; font-weight:700; color:var(--accent-red); }
+        .gameover-stats { display:flex; gap:20px; margin:14px 0; }
+        .gameover-stat { text-align:center; }
+        .gameover-stat-value { font-size:18px; font-weight:800; color:var(--text-primary); }
+        .gameover-stat-label { font-size:9px; color:var(--text-secondary); text-transform:uppercase; }
+        .gameover-buttons { display:flex; flex-direction:column; gap:10px; width:100%; max-width:260px; margin-top:16px; }
+
+        /* Music Toggle */
+        .music-toggle { position:absolute; top:calc(var(--safe-top) + 10px); right:12px; width:40px; height:40px; background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; z-index:25; transition:all 0.2s; }
+        .music-toggle:hover { background:rgba(255,255,255,0.1); }
+        .music-toggle.muted { opacity:0.5; }
+
+        /* Alerts */
+        .alert-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.95); border:2px solid var(--accent-gold); border-radius:16px; padding:20px 30px; text-align:center; z-index:100; display:none; backdrop-filter:blur(20px); }
+        .alert-popup.show { display:block; animation:popIn 0.3s ease; }
+        @keyframes popIn { from { transform:translate(-50%,-50%) scale(0.5); opacity:0; } to { transform:translate(-50%,-50%) scale(1); opacity:1; } }
+        .alert-icon { font-size:40px; margin-bottom:8px; }
+        .alert-text { font-size:14px; font-weight:800; color:var(--accent-gold); text-transform:uppercase; letter-spacing:1px; }
+
+        .part-popup { position:absolute; pointer-events:none; font-size:13px; font-weight:800; text-shadow:0 2px 8px rgba(0,0,0,0.8); animation:partPop 1s ease-out forwards; z-index:15; }
+        @keyframes partPop { from { opacity:1; transform:translateY(0) scale(1); } to { opacity:0; transform:translateY(-40px) scale(1.2); } }
+
+        /* Leaderboard styles from v3 */
         .lb-content { padding:12px; flex:1; display:flex; flex-direction:column; }
         .lb-tabs { display:flex; gap:8px; margin-bottom:12px; }
-        .lb-tab { flex:1; padding:10px; font-family:inherit; font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--bg-card); border:1px solid var(--border-color); border-radius:8px; cursor:pointer; }
+        .lb-tab { flex:1; padding:12px; font-family:inherit; font-size:12px; font-weight:700; color:var(--text-secondary); background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; cursor:pointer; transition:all 0.2s; }
         .lb-tab.active { background:var(--accent-blue); color:white; border-color:var(--accent-blue); }
         .lb-list { display:flex; flex-direction:column; gap:8px; flex:1; padding-bottom:30px; }
-        .lb-loading,.lb-empty { text-align:center; padding:60px 20px; color:var(--text-secondary); font-size:13px; }
-        .lb-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; }
+        .lb-loading,.lb-empty { text-align:center; padding:60px 20px; color:var(--text-secondary); font-size:14px; }
+        .lb-item { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; transition:all 0.2s; }
         .lb-item.me { background:rgba(74,108,247,0.15); border-color:var(--accent-blue); }
-        .lb-rank { width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:8px; background:var(--bg-primary); color:var(--text-secondary); flex-shrink:0; }
+        .lb-rank { width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; border-radius:10px; background:var(--bg-primary); color:var(--text-secondary); }
         .lb-rank.gold { background:linear-gradient(135deg,#f0b90b,#d4a00a); color:#000; }
         .lb-rank.silver { background:linear-gradient(135deg,#c0c0c0,#a8a8a8); color:#000; }
         .lb-rank.bronze { background:linear-gradient(135deg,#cd7f32,#b06c28); color:#fff; }
-        .lb-avatar { font-size:24px; flex-shrink:0; }
+        .lb-avatar { font-size:26px; }
         .lb-info { flex:1; min-width:0; }
-        .lb-name { font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .lb-stats { font-size:9px; color:var(--text-secondary); margin-top:2px; }
-        .lb-score { font-size:14px; font-weight:800; color:var(--accent-gold); flex-shrink:0; }
-        .rfq-content { padding:calc(var(--safe-top) + 10px) 16px 20px; display:flex; flex-direction:column; align-items:center; }
-        .rfq-header { text-align:center; margin-bottom:12px; }
-        .rfq-header h2 { font-size:11px; color:var(--accent-cyan); text-transform:uppercase; }
-        .rfq-header h1 { font-size:20px; font-weight:800; color:var(--text-primary); margin-top:2px; }
-        .rfq-client { font-size:10px; color:var(--text-secondary); margin-top:2px; }
-        .rfq-order { width:100%; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:10px; }
-        .rfq-order-title { font-size:9px; color:var(--text-secondary); text-transform:uppercase; margin-bottom:8px; }
-        .rfq-parts { display:flex; flex-direction:column; gap:6px; }
-        .rfq-part { display:flex; align-items:center; gap:8px; padding:8px; background:rgba(0,0,0,0.2); border-radius:8px; }
-        .rfq-part-icon { width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:16px; }
-        .rfq-part-info { flex:1; }
-        .rfq-part-name { font-size:12px; font-weight:600; color:var(--text-primary); }
-        .rfq-part-rarity { font-size:8px; }
-        .rfq-part-qty { font-size:12px; font-weight:700; color:var(--text-secondary); }
-        .rfq-reward { width:100%; background:linear-gradient(135deg,rgba(240,185,11,0.15),rgba(240,185,11,0.05)); border:1px solid rgba(240,185,11,0.3); border-radius:10px; padding:10px; text-align:center; margin-bottom:12px; }
-        .rfq-reward-label { font-size:8px; color:var(--accent-gold); text-transform:uppercase; }
-        .rfq-reward-amount { font-size:22px; font-weight:800; color:var(--accent-gold); margin-top:2px; }
-        .tutorial-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; }
-        .tutorial-overlay.show { display:flex; }
-        .tutorial-step { display:none; flex-direction:column; align-items:center; }
-        .tutorial-step.active { display:flex; }
-        .tutorial-icon { font-size:60px; margin-bottom:20px; }
-        .tutorial-title { font-size:20px; font-weight:800; color:var(--text-primary); margin-bottom:10px; }
-        .tutorial-text { font-size:14px; color:var(--text-secondary); line-height:1.5; margin-bottom:20px; }
-        .tutorial-dots { display:flex; gap:8px; margin-bottom:20px; }
-        .tutorial-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); }
-        .tutorial-dot.active { background:var(--accent-blue); }
-        .gameover-screen { background:linear-gradient(180deg,rgba(10,11,20,0.97),rgba(18,19,31,0.98)); justify-content:center; align-items:center; padding:20px; }
-        .gameover-title { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
-        .gameover-money { font-size:40px; font-weight:800; color:var(--accent-gold); }
-        .gameover-label { font-size:9px; color:var(--text-secondary); text-transform:uppercase; }
-        .gameover-rfq { margin:12px 0; padding:10px 18px; border-radius:10px; text-align:center; }
-        .gameover-rfq.success { background:rgba(46,204,113,0.15); border:1px solid rgba(46,204,113,0.3); }
-        .gameover-rfq.failed { background:rgba(231,76,60,0.15); border:1px solid rgba(231,76,60,0.3); }
-        .gameover-rfq-text { font-size:12px; font-weight:600; }
-        .gameover-rfq.success .gameover-rfq-text { color:var(--accent-green); }
-        .gameover-rfq.failed .gameover-rfq-text { color:var(--accent-red); }
-        .gameover-new { background:var(--bg-card); border-radius:10px; padding:10px; margin-bottom:12px; text-align:center; }
-        .gameover-new-title { font-size:9px; color:var(--accent-green); text-transform:uppercase; margin-bottom:6px; }
-        .gameover-new-icons { display:flex; justify-content:center; gap:6px; font-size:22px; }
-        .gameover-achievement { background:rgba(240,185,11,0.15); border:1px solid rgba(240,185,11,0.3); border-radius:10px; padding:10px; margin-bottom:12px; text-align:center; }
-        .gameover-achievement-title { font-size:9px; color:var(--accent-gold); text-transform:uppercase; margin-bottom:4px; }
-        .gameover-achievement-name { font-size:13px; font-weight:700; color:var(--accent-gold); }
-        .gameover-stats { display:flex; gap:16px; margin:10px 0 16px; }
-        .gameover-stat { text-align:center; }
-        .gameover-stat-value { font-size:16px; font-weight:700; color:var(--text-primary); }
-        .gameover-stat-label { font-size:8px; color:var(--text-secondary); text-transform:uppercase; }
-        .gameover-buttons { display:flex; flex-direction:column; gap:8px; width:100%; max-width:240px; }
-        .donate-content { padding:16px; text-align:center; }
-        .donate-icon { font-size:60px; margin:20px 0; }
-        .donate-title { font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:8px; }
-        .donate-text { font-size:12px; color:var(--text-secondary); margin-bottom:20px; line-height:1.5; }
-        .donate-options { display:flex; flex-direction:column; gap:10px; }
-        .donate-btn { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; cursor:pointer; }
-        .donate-btn:hover { border-color:var(--accent-gold); }
-        .donate-btn-left { display:flex; align-items:center; gap:10px; }
-        .donate-btn-stars { font-size:14px; font-weight:700; color:var(--accent-gold); }
-        .donate-btn-bonus { font-size:11px; color:var(--accent-green); }
-        .alert-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.95); border:2px solid var(--accent-gold); border-radius:14px; padding:16px 26px; text-align:center; z-index:100; display:none; }
-        .alert-popup.show { display:block; animation:popIn 0.3s ease; }
-        @keyframes popIn { 0% { transform:translate(-50%,-50%) scale(0.5); opacity:0; } 100% { transform:translate(-50%,-50%) scale(1); opacity:1; } }
-        .alert-icon { font-size:36px; margin-bottom:6px; }
-        .alert-text { font-size:12px; font-weight:700; color:var(--accent-gold); text-transform:uppercase; }
-        .part-popup { position:absolute; pointer-events:none; font-size:12px; font-weight:700; text-shadow:0 2px 4px rgba(0,0,0,0.5); animation:partPop 1s ease-out forwards; z-index:15; }
-        @keyframes partPop { 0% { opacity:1; transform:translateY(0); } 100% { opacity:0; transform:translateY(-35px); } }
-        .invite-bonus { background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.3); border-radius:10px; padding:12px; margin:10px 0; text-align:center; }
-        .invite-bonus-title { font-size:10px; color:var(--accent-cyan); text-transform:uppercase; margin-bottom:4px; }
-        .invite-bonus-text { font-size:18px; font-weight:800; color:var(--accent-cyan); }
-        .invite-count { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+        .lb-name { font-size:13px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .lb-stats { font-size:10px; color:var(--text-secondary); margin-top:2px; }
+        .lb-score { font-size:16px; font-weight:900; color:var(--accent-gold); }
+
+        /* Shop styles */
+        .shop-content { padding:12px; }
+        .shop-section { margin-bottom:16px; }
+        .shop-section-title { font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; padding-left:4px; }
+        .shop-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+        .shop-item { background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; }
+        .shop-item:hover { border-color:rgba(255,255,255,0.2); background:var(--bg-card-hover); }
+        .shop-item.owned { border-color:var(--accent-green); background:rgba(46,204,113,0.1); }
+        .shop-item-icon { font-size:32px; margin-bottom:6px; }
+        .shop-item-name { font-size:12px; font-weight:700; color:var(--text-primary); }
+        .shop-item-desc { font-size:9px; color:var(--text-secondary); margin:3px 0 6px; }
+        .shop-item-price { font-size:12px; font-weight:800; color:var(--accent-gold); }
+        .shop-item-price.owned { color:var(--accent-green); }
+        .plane-item { display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; }
+        .plane-item:hover { border-color:rgba(255,255,255,0.2); }
+        .plane-item.owned { border-color:var(--accent-green); }
+        .plane-item.selected { border-color:var(--accent-gold); border-width:2px; box-shadow:var(--glow-gold); }
+        .plane-icon { font-size:34px; }
+        .plane-info { flex:1; }
+        .plane-name { font-size:13px; font-weight:700; color:var(--text-primary); }
+        .plane-stats { font-size:10px; color:var(--text-secondary); }
+        .plane-price { font-size:13px; font-weight:800; color:var(--accent-gold); }
+        .plane-price.owned { color:var(--accent-green); }
     </style>
 </head>
 <body>
 <div class="game-container">
     <canvas id="gameCanvas"></canvas>
+
     <div class="hud" id="hud">
         <div class="hud-top">
             <div class="hud-left">
                 <div class="hud-box hud-money">💰 $<span id="hudMoney">0</span></div>
-                <div class="hud-box hud-streak" id="hudStreak">🔥 x1.0</div>
-                <div class="hud-powerups"><div class="hud-pw" id="pwShield">🛡️</div><div class="hud-pw" id="pwTurbo">⚡</div></div>
-            </div>
-            <div class="hud-center"><div class="hud-rfq"><div class="hud-rfq-title">📋 RFQ</div><div class="hud-rfq-items" id="hudRfq"></div></div></div>
-            <div class="hud-right"><div class="hud-box" id="hudParts">📦 0</div><div class="hud-box" id="hudSpeed">⚡ x1.0</div></div>
-        </div>
-    </div>
-    <div class="weather-ind" id="weatherInd"><span id="weatherIcon">☀️</span><span id="weatherText">Ясно</span></div>
-    <div class="aog-banner" id="aogBanner"><span>🚨</span><span style="font-size:11px;font-weight:700;color:white;">AOG</span><span id="aogTimer">60</span></div>
-    <div class="shield-bar" id="shieldBar"><span>🛡️</span><div class="shield-fill-bg"><div class="shield-fill" id="shieldFill"></div></div></div>
-    <div class="alert-popup" id="alertPopup"><div class="alert-icon" id="alertIcon">⭐</div><div class="alert-text" id="alertText">LEGENDARY!</div></div>
-
-    <div class="tutorial-overlay" id="tutorial">
-        <div class="tutorial-step active" data-step="1"><div class="tutorial-icon">✈️</div><div class="tutorial-title">Добро пожаловать!</div><div class="tutorial-text">Управляй самолётом и собирай авиадетали для заказов RFQ</div></div>
-        <div class="tutorial-step" data-step="2"><div class="tutorial-icon">👆</div><div class="tutorial-title">Управление</div><div class="tutorial-text">Нажимай на экран чтобы лететь вверх<br>Двойной тап = турбо!</div></div>
-        <div class="tutorial-step" data-step="3"><div class="tutorial-icon">📦</div><div class="tutorial-title">Собирай детали</div><div class="tutorial-text">От обычных O-Ring до легендарных двигателей</div></div>
-        <div class="tutorial-step" data-step="4"><div class="tutorial-icon">🏆</div><div class="tutorial-title">Соревнуйся!</div><div class="tutorial-text">Попади в топ лидерборда!</div></div>
-        <div class="tutorial-dots" id="tutorialDots"></div>
-        <button class="btn btn-primary" id="tutorialNext" style="width:200px;">Далее</button>
-    </div>
-
-    <div class="screen main-menu active" id="mainMenu">
-        <div class="menu-content">
-            <div class="logo-badge">✈️ Aviation Game v3.0</div>
-            <div class="logo-title">Aviation Parts<br>Runner</div>
-            <div class="logo-subtitle">Aviation Service</div>
-            <div class="wallet-card">
-                <div class="wallet-top"><div class="wallet-amount">$<span id="menuMoney">0</span></div><div class="wallet-streak" id="menuStreak">🔥 День 1</div></div>
-                <div class="wallet-stats">
-                    <div class="wallet-stat"><div class="wallet-stat-value" id="menuRfq">0</div><div class="wallet-stat-label">RFQ</div></div>
-                    <div class="wallet-stat"><div class="wallet-stat-value" id="menuParts">0</div><div class="wallet-stat-label">Деталей</div></div>
-                    <div class="wallet-stat"><div class="wallet-stat-value" id="menuGames">0</div><div class="wallet-stat-label">Полётов</div></div>
-                    <div class="wallet-stat"><div class="wallet-stat-value" id="menuBest">$0</div><div class="wallet-stat-label">Рекорд</div></div>
+                <div class="hud-box hud-xp">
+                    <span>⭐ LVL <span id="hudLevel">1</span></span>
+                    <div class="hud-xp-bar"><div class="hud-xp-fill" id="hudXpFill"></div></div>
+                </div>
+                <div class="hud-powerups">
+                    <div class="hud-pw" id="pwShield">🛡️</div>
+                    <div class="hud-pw" id="pwTurbo">⚡</div>
                 </div>
             </div>
-            <div class="invite-bonus" id="inviteBonus" style="display:none;"><div class="invite-bonus-title">👥 Бонус за друзей</div><div class="invite-bonus-text">+$<span id="inviteBonusAmount">0</span></div><div class="invite-count">Приглашено: <span id="inviteCount">0</span></div></div>
-            <div class="menu-buttons">
-                <button class="btn btn-primary" id="btnPlay">🚀 Начать полёт</button>
-                <button class="btn btn-aog" id="btnAog" style="display:none;">🚨 AOG Миссия (x3)</button>
-                <div class="menu-row"><button class="btn btn-secondary" id="btnShop">🛒 Магазин</button><button class="btn btn-secondary" id="btnCollection">📚 Коллекция</button></div>
-                <div class="menu-row"><button class="btn btn-secondary" id="btnAchievements">🏅 Достижения</button><button class="btn btn-secondary" id="btnLeaderboard">🏆 Лидерборд</button></div>
-                <button class="btn btn-invite" id="btnInvite">👥 Пригласить друзей (+$5000)</button>
-                <button class="btn btn-gold" id="btnDonate">⭐ Поддержать</button>
+            <div class="hud-center">
+                <div class="hud-mission" id="hudMission">
+                    <div class="hud-mission-title">📋 Миссия</div>
+                    <div class="hud-mission-text" id="hudMissionText">Собери 10 деталей</div>
+                    <div class="hud-mission-progress"><div class="hud-mission-fill" id="hudMissionFill"></div></div>
+                </div>
             </div>
-            <div class="menu-footer"><a href="https://jet-avia.ru" target="_blank">jet-avia.ru</a> • v3.0</div>
+            <div class="hud-right">
+                <div class="hud-box" id="hudParts">📦 0</div>
+                <div class="hud-box" id="hudScore">🎯 0</div>
+            </div>
         </div>
     </div>
 
-    <div class="screen" id="shopScreen"><div class="screen-header"><button class="btn-back" id="shopBack">←</button><div class="screen-title">🛒 Магазин</div></div><div class="shop-content"><div class="shop-section"><div class="shop-section-title">✈️ Самолёты</div><div id="planesList"></div></div><div class="shop-section"><div class="shop-section-title">⚡ Апгрейды</div><div class="shop-grid" id="upgradesList"></div></div></div></div>
-    <div class="screen" id="collectionScreen"><div class="screen-header"><button class="btn-back" id="collectionBack">←</button><div class="screen-title">📚 Коллекция</div></div><div class="collection-content"><div class="collection-progress"><div class="collection-progress-text">Собрано: <span id="collectionCount">0</span>/13</div><div class="collection-progress-bar"><div class="collection-progress-fill" id="collectionFill"></div></div></div><div class="collection-grid" id="collectionGrid"></div></div></div>
-    <div class="screen" id="achievementsScreen"><div class="screen-header"><button class="btn-back" id="achievementsBack">←</button><div class="screen-title">🏅 Достижения</div></div><div class="achievements-content" id="achievementsList"></div></div>
-    <div class="screen" id="lbScreen"><div class="screen-header"><button class="btn-back" id="lbBack">←</button><div class="screen-title">🏆 Лидерборд</div></div><div class="lb-content"><div class="lb-tabs"><button class="lb-tab active" data-tab="score">🏆 Рекорд</button><button class="lb-tab" data-tab="money">💰 Деньги</button></div><div class="lb-list" id="lbList"></div></div></div>
-    <div class="screen" id="rfqScreen"><div class="rfq-content"><div class="rfq-header"><h2>Новый заказ</h2><h1>RFQ #<span id="rfqNumber">001</span></h1><div class="rfq-client">Клиент: <span id="rfqClient">Airline</span></div></div><div class="rfq-order"><div class="rfq-order-title">Требуемые детали</div><div class="rfq-parts" id="rfqParts"></div></div><div class="rfq-reward"><div class="rfq-reward-label">Награда</div><div class="rfq-reward-amount">+$<span id="rfqReward">0</span></div></div><div class="menu-buttons"><button class="btn btn-primary" id="btnStartRfq">✈️ Принять</button><button class="btn btn-secondary" id="btnSkipRfq">⏭️ Пропустить</button></div></div></div>
-    <div class="screen" id="donateScreen"><div class="screen-header"><button class="btn-back" id="donateBack">←</button><div class="screen-title">⭐ Поддержка</div></div><div class="donate-content"><div class="donate-icon">⭐</div><div class="donate-title">Поддержи разработку!</div><div class="donate-text">Получи бонусы за поддержку</div><div class="donate-options"><div class="donate-btn" data-stars="50"><div class="donate-btn-left"><span>⭐</span><span class="donate-btn-stars">50 Stars</span></div><div class="donate-btn-bonus">+$10,000</div></div><div class="donate-btn" data-stars="100"><div class="donate-btn-left"><span>⭐⭐</span><span class="donate-btn-stars">100 Stars</span></div><div class="donate-btn-bonus">+$25,000</div></div><div class="donate-btn" data-stars="500"><div class="donate-btn-left"><span>⭐⭐⭐</span><span class="donate-btn-stars">500 Stars</span></div><div class="donate-btn-bonus">+$150K + 🛫</div></div></div></div></div>
-    <div class="screen gameover-screen" id="gameoverScreen"><div class="gameover-title">Полёт завершён</div><div class="gameover-money">$<span id="goMoney">0</span></div><div class="gameover-label">Заработано</div><div class="gameover-rfq" id="goRfq"><div class="gameover-rfq-text" id="goRfqText"></div></div><div class="gameover-new" id="goNew" style="display:none;"><div class="gameover-new-title">🆕 Новые детали!</div><div class="gameover-new-icons" id="goNewIcons"></div></div><div class="gameover-achievement" id="goAchievement" style="display:none;"><div class="gameover-achievement-title">🏅 Достижение!</div><div class="gameover-achievement-name" id="goAchievementName"></div></div><div class="gameover-stats"><div class="gameover-stat"><div class="gameover-stat-value" id="goParts">0</div><div class="gameover-stat-label">Деталей</div></div><div class="gameover-stat"><div class="gameover-stat-value" id="goBest">$0</div><div class="gameover-stat-label">Рекорд</div></div></div><div class="gameover-buttons"><button class="btn btn-primary" id="btnRetry">🔄 Ещё раз</button><button class="btn btn-secondary" id="btnShare">📤 Поделиться</button><button class="btn btn-secondary" id="btnHome">🏠 В меню</button></div></div>
+    <div class="boss-hud" id="bossHud">
+        <div class="boss-name" id="bossName">⚠️ BOSS ⚠️</div>
+        <div class="boss-hp-bar"><div class="boss-hp-fill" id="bossHpFill"></div></div>
+        <div class="boss-hp-text"><span id="bossHp">100</span>%</div>
+    </div>
+
+    <div class="music-toggle" id="musicToggle">🎵</div>
+    <div class="alert-popup" id="alertPopup"><div class="alert-icon" id="alertIcon">⭐</div><div class="alert-text" id="alertText">LEGENDARY!</div></div>
+
+    <!-- Main Menu -->
+    <div class="screen main-menu active" id="mainMenu">
+        <div class="menu-content">
+            <div class="logo-badge">✈️ Season 1 • v4.0</div>
+            <div class="logo-title">Aviation Parts<br>Runner</div>
+            <div class="logo-subtitle">Aviation Service</div>
+
+            <div class="stats-card">
+                <div class="stats-top">
+                    <div class="stats-money">$<span id="menuMoney">0</span></div>
+                    <div class="stats-level">
+                        <div class="stats-level-num" id="menuLevel">1</div>
+                        <div class="stats-level-text">LVL</div>
+                    </div>
+                </div>
+                <div class="stats-xp-bar"><div class="stats-xp-fill" id="menuXpFill"></div></div>
+                <div class="stats-grid">
+                    <div class="stats-item"><div class="stats-item-value" id="menuGames">0</div><div class="stats-item-label">Игр</div></div>
+                    <div class="stats-item"><div class="stats-item-value" id="menuParts">0</div><div class="stats-item-label">Детали</div></div>
+                    <div class="stats-item"><div class="stats-item-value" id="menuBosses">0</div><div class="stats-item-label">Боссы</div></div>
+                    <div class="stats-item"><div class="stats-item-value" id="menuWins">0</div><div class="stats-item-label">Победы</div></div>
+                </div>
+            </div>
+
+            <div class="missions-card">
+                <div class="missions-header">
+                    <div class="missions-title">📋 Ежедневные миссии</div>
+                    <div class="missions-timer" id="missionsTimer">23:59:59</div>
+                </div>
+                <div id="missionsList"></div>
+            </div>
+
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btnPlay">🚀 Начать полёт</button>
+                <button class="btn btn-boss" id="btnBoss">👹 Режим Босса</button>
+                <div class="menu-row">
+                    <button class="btn btn-pvp" id="btnPvp">⚔️ PvP Дуэль</button>
+                    <button class="btn btn-battlepass" id="btnBattlePass">🎖️ Battle Pass</button>
+                </div>
+                <div class="menu-row">
+                    <button class="btn btn-secondary" id="btnShop">🛒 Магазин</button>
+                    <button class="btn btn-secondary" id="btnLeaderboard">🏆 Рейтинг</button>
+                </div>
+            </div>
+            <div class="menu-footer"><a href="https://jet-avia.ru" target="_blank">jet-avia.ru</a> • v4.0</div>
+        </div>
+    </div>
+
+    <!-- Battle Pass -->
+    <div class="screen" id="bpScreen">
+        <div class="screen-header"><button class="btn-back" id="bpBack">←</button><div class="screen-title">🎖️ Battle Pass</div></div>
+        <div class="bp-content">
+            <div class="bp-header">
+                <div class="bp-season">Сезон 1</div>
+                <div class="bp-title">Sky Warriors</div>
+                <div class="bp-progress">
+                    <div class="bp-level" id="bpLevel">1</div>
+                    <div class="bp-bar"><div class="bp-bar-fill" id="bpBarFill"></div></div>
+                    <div class="bp-xp"><span id="bpXp">0</span>/1000 XP</div>
+                </div>
+            </div>
+            <div class="bp-tiers" id="bpTiers"></div>
+        </div>
+    </div>
+
+    <!-- PvP -->
+    <div class="screen" id="pvpScreen">
+        <div class="screen-header"><button class="btn-back" id="pvpBack">←</button><div class="screen-title">⚔️ PvP Дуэль</div></div>
+        <div class="pvp-content">
+            <div class="pvp-header">
+                <div class="pvp-title">⚔️ Арена</div>
+                <div class="pvp-subtitle">Соревнуйся с другими пилотами!</div>
+                <div class="pvp-stats">
+                    <div class="pvp-stat"><div class="pvp-stat-value" id="pvpWins">0</div><div class="pvp-stat-label">Побед</div></div>
+                    <div class="pvp-stat"><div class="pvp-stat-value" id="pvpLosses">0</div><div class="pvp-stat-label">Поражений</div></div>
+                    <div class="pvp-stat"><div class="pvp-stat-value" id="pvpRank">-</div><div class="pvp-stat-label">Ранг</div></div>
+                </div>
+            </div>
+            <div class="pvp-opponent" id="pvpOpponent">
+                <div class="pvp-opponent-avatar">✈️</div>
+                <div class="pvp-opponent-info">
+                    <div class="pvp-opponent-name" id="pvpOpponentName">Поиск...</div>
+                    <div class="pvp-opponent-score" id="pvpOpponentScore">Рекорд: $0</div>
+                    <div class="pvp-opponent-level" id="pvpOpponentLevel">Уровень 1</div>
+                </div>
+            </div>
+            <button class="btn btn-pvp" id="btnStartPvp" style="width:100%;">⚔️ Начать дуэль</button>
+            <button class="btn btn-secondary" id="btnFindOpponent" style="width:100%;margin-top:10px;">🔄 Найти соперника</button>
+        </div>
+    </div>
+
+    <!-- Boss Mode -->
+    <div class="screen" id="bossScreen">
+        <div class="screen-header"><button class="btn-back" id="bossBack">←</button><div class="screen-title">👹 Режим Босса</div></div>
+        <div class="boss-content">
+            <div class="boss-preview">👹</div>
+            <div class="boss-info">
+                <div class="boss-info-name" id="bossInfoName">Cargo Titan</div>
+                <div class="boss-info-desc">Огромный грузовой самолёт. Уклоняйся от атак и собирай детали для урона!</div>
+            </div>
+            <div class="boss-rewards">
+                <div class="boss-reward-item"><div class="boss-reward-icon">💰</div><div class="boss-reward-text">x5 денег</div></div>
+                <div class="boss-reward-item"><div class="boss-reward-icon">⭐</div><div class="boss-reward-text">+500 XP</div></div>
+                <div class="boss-reward-item"><div class="boss-reward-icon">🏆</div><div class="boss-reward-text">Трофей</div></div>
+            </div>
+            <button class="btn btn-boss" id="btnStartBoss" style="width:100%;">👹 Сразиться с боссом</button>
+        </div>
+    </div>
+
+    <!-- Shop -->
+    <div class="screen" id="shopScreen">
+        <div class="screen-header"><button class="btn-back" id="shopBack">←</button><div class="screen-title">🛒 Магазин</div></div>
+        <div class="shop-content">
+            <div class="shop-section"><div class="shop-section-title">✈️ Самолёты</div><div id="planesList"></div></div>
+            <div class="shop-section"><div class="shop-section-title">⚡ Апгрейды</div><div class="shop-grid" id="upgradesList"></div></div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="screen" id="lbScreen">
+        <div class="screen-header"><button class="btn-back" id="lbBack">←</button><div class="screen-title">🏆 Лидерборд</div></div>
+        <div class="lb-content">
+            <div class="lb-tabs">
+                <button class="lb-tab active" data-tab="score">🏆 Рекорд</button>
+                <button class="lb-tab" data-tab="money">💰 Деньги</button>
+            </div>
+            <div class="lb-list" id="lbList"></div>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div class="screen gameover-screen" id="gameoverScreen">
+        <div class="gameover-icon" id="goIcon">✈️</div>
+        <div class="gameover-title">Полёт завершён</div>
+        <div class="gameover-money">$<span id="goMoney">0</span></div>
+        <div class="gameover-xp">+<span id="goXp">0</span> XP</div>
+        <div class="gameover-boss" id="goBoss" style="display:none;"><div class="gameover-boss-text" id="goBossText">👹 Босс побеждён!</div></div>
+        <div class="gameover-stats">
+            <div class="gameover-stat"><div class="gameover-stat-value" id="goParts">0</div><div class="gameover-stat-label">Деталей</div></div>
+            <div class="gameover-stat"><div class="gameover-stat-value" id="goScore">0</div><div class="gameover-stat-label">Счёт</div></div>
+            <div class="gameover-stat"><div class="gameover-stat-value" id="goBest">$0</div><div class="gameover-stat-label">Рекорд</div></div>
+        </div>
+        <div class="gameover-buttons">
+            <button class="btn btn-primary" id="btnRetry">🔄 Ещё раз</button>
+            <button class="btn btn-secondary" id="btnShare">📤 Поделиться</button>
+            <button class="btn btn-secondary" id="btnHome">🏠 В меню</button>
+        </div>
+    </div>
 </div>
+
 <script>
-const SUPABASE_URL='https://imqoksswffkufknkbofm.supabase.co',SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltcW9rc3N3ZmZrdWZrbmtib2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzE2ODYsImV4cCI6MjA4MzA0NzY4Nn0.wcH5yZGRSzIkE0qjb_IIDSt3S-q3ylsBLJPT3Of-T78',BOT_USERNAME='AviationPartsBot';
-const PARTS=[{id:'oring',name:'O-Ring',icon:'⭕',rarity:'common',value:10,chance:0.20},{id:'washer',name:'Washer',icon:'🔘',rarity:'common',value:20,chance:0.20},{id:'rivet',name:'Rivet',icon:'📍',rarity:'common',value:30,chance:0.20},{id:'valve',name:'Valve',icon:'🔧',rarity:'uncommon',value:200,chance:0.10},{id:'filter',name:'Filter',icon:'🧽',rarity:'uncommon',value:300,chance:0.08},{id:'bearing',name:'Bearing',icon:'⚙️',rarity:'uncommon',value:500,chance:0.07},{id:'fuelpump',name:'Fuel Pump',icon:'⛽',rarity:'rare',value:2000,chance:0.05},{id:'actuator',name:'Actuator',icon:'🔌',rarity:'rare',value:3000,chance:0.04},{id:'sensor',name:'Sensor',icon:'📡',rarity:'rare',value:5000,chance:0.03},{id:'hmu',name:'HMU',icon:'🎛️',rarity:'epic',value:20000,chance:0.015},{id:'starter',name:'Starter',icon:'⚡',rarity:'epic',value:30000,chance:0.01},{id:'apu',name:'APU',icon:'🔋',rarity:'legendary',value:100000,chance:0.003},{id:'engine',name:'Engine',icon:'🛫',rarity:'legendary',value:200000,chance:0.002}];
-const PLANES=[{id:'cessna',name:'Cessna 172',icon:'🛩️',price:0,mult:1.0,desc:'Лёгкий'},{id:'boeing',name:'Boeing 737',icon:'✈️',price:100000,mult:1.2,desc:'+20%'},{id:'airbus',name:'Airbus A320',icon:'🛫',price:250000,mult:1.5,desc:'+50%'},{id:'jet',name:'Private Jet',icon:'🚀',price:500000,mult:2.0,desc:'x2'}];
-const UPGRADES=[{id:'magnet',name:'Магнит',icon:'🧲',price:10000,desc:'+50%'},{id:'shield',name:'Щит',icon:'🛡️',price:25000,desc:'Защита'},{id:'turbo',name:'Турбо',icon:'⚡',price:15000,desc:'3 сек'},{id:'cargo',name:'Cargo+',icon:'📦',price:50000,desc:'+25%'}];
-const ACHIEVEMENTS=[{id:'first_flight',name:'Первый полёт',desc:'Сыграй игру',icon:'🎮',goal:1,stat:'games',reward:1000},{id:'collector_10',name:'Сборщик',desc:'10 деталей',icon:'📦',goal:10,stat:'parts',reward:2000},{id:'collector_100',name:'Опытный',desc:'100 деталей',icon:'📦',goal:100,stat:'parts',reward:10000},{id:'rfq_1',name:'Первый заказ',desc:'Выполни RFQ',icon:'📋',goal:1,stat:'rfq',reward:5000},{id:'rfq_10',name:'Поставщик',desc:'10 RFQ',icon:'📋',goal:10,stat:'rfq',reward:25000},{id:'money_10k',name:'Деньги',desc:'$10K',icon:'💰',goal:10000,stat:'money',reward:5000},{id:'money_100k',name:'Бизнесмен',desc:'$100K',icon:'💰',goal:100000,stat:'money',reward:25000},{id:'streak_7',name:'Неделя',desc:'7 дней',icon:'🔥',goal:7,stat:'streak',reward:10000},{id:'legendary',name:'Легенда',desc:'Легендарная деталь',icon:'⭐',goal:1,stat:'legendary',reward:20000},{id:'full_collection',name:'Коллекция',desc:'Все 13 деталей',icon:'🏆',goal:13,stat:'collection',reward:200000}];
-const WEATHER=[{id:'clear',name:'Ясно',icon:'☀️',speedMod:1,spawnMod:1},{id:'rain',name:'Дождь',icon:'🌧️',speedMod:0.9,spawnMod:1.2},{id:'storm',name:'Шторм',icon:'⛈️',speedMod:1.1,spawnMod:0.8},{id:'fog',name:'Туман',icon:'🌫️',speedMod:0.8,spawnMod:1.1},{id:'snow',name:'Снег',icon:'❄️',speedMod:0.85,spawnMod:1.15}];
-const CLIENTS=['Aeroflot','Emirates','Lufthansa','Air France','British Airways','Qatar Airways','S7 Airlines','Utair'];
-const CFG={PLAYER:{X:120,JUMP:-10,GRAVITY:0.45,MAX_V:12},OBS:{W:60,GAP:210,SPEED:3.5,SPAWN:120,MIN_H:100},PARTS:{SPAWN:50},DIFF:{INC:0.0003,MAX:2.5},MAGNET:80,SHIELD:180,TURBO:180};
-let W=400,H=700,safeTop=100,state='menu',money=0,parts=0,frame=0,speed=1,lastTime=0,deltaTime=16;
-let player={x:0,y:0,v:0,rot:0},obstacles=[],items=[],particles=[],particlePool=[],maxParticles=80;
-let rfq=null,rfqProg={},isAog=false,aogT=0,shieldOn=false,shieldT=0,turboOn=false,turboT=0;
-let newParts=[],newAchievements=[],currentWeather=WEATHER[0],raindrops=[],snowflakes=[];
-let stats=JSON.parse(localStorage.getItem('apr5'))||{money:0,rfq:0,parts:0,games:0,best:0,streak:1,lastPlay:null,collection:[],planes:['cessna'],plane:'cessna',upgrades:[],achievements:[],legendary:0,invites:0,tutorialDone:false};
-const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+// ==========================================
+// CONFIG
+// ==========================================
+const SUPABASE_URL='https://imqoksswffkufknkbofm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltcW9rc3N3ZmZrdWZrbmtib2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0NzE2ODYsImV4cCI6MjA4MzA0NzY4Nn0.wcH5yZGRSzIkE0qjb_IIDSt3S-q3ylsBLJPT3Of-T78';
+
+const PARTS=[
+    {id:'oring',name:'O-Ring',icon:'⭕',rarity:'common',value:10,chance:0.20,dmg:1},
+    {id:'washer',name:'Washer',icon:'🔘',rarity:'common',value:20,chance:0.18,dmg:1},
+    {id:'rivet',name:'Rivet',icon:'📍',rarity:'common',value:30,chance:0.18,dmg:2},
+    {id:'valve',name:'Valve',icon:'🔧',rarity:'uncommon',value:200,chance:0.12,dmg:3},
+    {id:'filter',name:'Filter',icon:'🧽',rarity:'uncommon',value:300,chance:0.10,dmg:4},
+    {id:'bearing',name:'Bearing',icon:'⚙️',rarity:'uncommon',value:500,chance:0.08,dmg:5},
+    {id:'fuelpump',name:'Fuel Pump',icon:'⛽',rarity:'rare',value:2000,chance:0.05,dmg:8},
+    {id:'actuator',name:'Actuator',icon:'🔌',rarity:'rare',value:3000,chance:0.04,dmg:10},
+    {id:'sensor',name:'Sensor',icon:'📡',rarity:'rare',value:5000,chance:0.03,dmg:12},
+    {id:'hmu',name:'HMU',icon:'🎛️',rarity:'epic',value:20000,chance:0.012,dmg:20},
+    {id:'starter',name:'Starter',icon:'⚡',rarity:'epic',value:30000,chance:0.008,dmg:25},
+    {id:'apu',name:'APU',icon:'🔋',rarity:'legendary',value:100000,chance:0.003,dmg:50},
+    {id:'engine',name:'Engine',icon:'🛫',rarity:'legendary',value:200000,chance:0.002,dmg:100}
+];
+
+const PLANES=[
+    {id:'cessna',name:'Cessna 172',icon:'🛩️',price:0,mult:1.0,desc:'Стартовый'},
+    {id:'boeing',name:'Boeing 737',icon:'✈️',price:100000,mult:1.2,desc:'+20%'},
+    {id:'airbus',name:'Airbus A320',icon:'🛫',price:250000,mult:1.5,desc:'+50%'},
+    {id:'jet',name:'Private Jet',icon:'🚀',price:500000,mult:2.0,desc:'x2'},
+    {id:'fighter',name:'F-16 Fighter',icon:'🛸',price:1000000,mult:3.0,desc:'x3'}
+];
+
+const UPGRADES=[
+    {id:'magnet',name:'Магнит',icon:'🧲',price:10000,desc:'+50% радиус'},
+    {id:'shield',name:'Щит',icon:'🛡️',price:25000,desc:'1 защита'},
+    {id:'turbo',name:'Турбо',icon:'⚡',price:15000,desc:'Ускорение'},
+    {id:'cargo',name:'Cargo+',icon:'📦',price:50000,desc:'+25% деньги'},
+    {id:'xpboost',name:'XP Boost',icon:'⭐',price:75000,desc:'+50% опыт'}
+];
+
+const BOSSES=[
+    {id:'cargo',name:'Cargo Titan',icon:'👹',hp:100,reward:5,xp:500},
+    {id:'bomber',name:'Sky Bomber',icon:'💀',hp:150,reward:8,xp:750},
+    {id:'stealth',name:'Shadow Wing',icon:'👿',hp:200,reward:12,xp:1000}
+];
+
+const BATTLE_PASS=[
+    {tier:1,free:{type:'money',amount:1000,icon:'💰'},premium:{type:'skin',id:'gold',icon:'✨'}},
+    {tier:2,free:{type:'xp',amount:200,icon:'⭐'},premium:{type:'money',amount:5000,icon:'💰'}},
+    {tier:3,free:{type:'money',amount:2500,icon:'💰'},premium:{type:'plane',id:'fighter',icon:'🛸'}},
+    {tier:4,free:{type:'xp',amount:500,icon:'⭐'},premium:{type:'money',amount:10000,icon:'💰'}},
+    {tier:5,free:{type:'money',amount:5000,icon:'💰'},premium:{type:'title',id:'ace',icon:'🏆'}},
+];
+
+const DAILY_MISSIONS=[
+    {id:'collect_10',name:'Собери 10 деталей',goal:10,type:'parts',reward:500,xp:50},
+    {id:'collect_50',name:'Собери 50 деталей',goal:50,type:'parts',reward:2000,xp:150},
+    {id:'earn_5k',name:'Заработай $5,000',goal:5000,type:'money',reward:1000,xp:100},
+    {id:'play_3',name:'Сыграй 3 игры',goal:3,type:'games',reward:750,xp:75},
+    {id:'score_10k',name:'Набери 10,000 очков',goal:10000,type:'score',reward:1500,xp:120},
+    {id:'boss_1',name:'Победи босса',goal:1,type:'boss',reward:5000,xp:300},
+    {id:'pvp_1',name:'Выиграй PvP дуэль',goal:1,type:'pvp',reward:3000,xp:200},
+];
+
+const CFG={
+    PLAYER:{X:100,JUMP:-11,GRAVITY:0.5,MAX_V:14},
+    OBS:{W:60,GAP:200,SPEED:4,SPAWN:100,MIN_H:90},
+    PARTS:{SPAWN:45},
+    DIFF:{INC:0.0004,MAX:3},
+    MAGNET:90,SHIELD:200,TURBO:200,
+    XP_PER_LEVEL:1000,
+    BOSS_SPAWN:15000 // score threshold
+};
+
+// ==========================================
+// STATE
+// ==========================================
+let W=400,H=700,safeTop=100;
+let state='menu',money=0,parts=0,score=0,frame=0,speed=1,lastTime=0,deltaTime=16;
+let player={x:0,y:0,v:0,rot:0};
+let obstacles=[],items=[],particles=[],projectiles=[];
+let shieldOn=false,shieldT=0,turboOn=false,turboT=0;
+let gameMode='normal'; // normal, boss, pvp
+let boss=null,bossActive=false;
+let pvpOpponent=null,pvpTarget=0;
+let currentMission=null,missionProgress=0;
+let musicPlaying=false;
+
+let stats=JSON.parse(localStorage.getItem('apr6'))||{
+    money:0,xp:0,level:1,games:0,parts:0,best:0,bosses:0,pvpWins:0,pvpLosses:0,
+    planes:['cessna'],plane:'cessna',upgrades:[],
+    bpLevel:1,bpXp:0,bpClaimed:[],
+    dailyMissions:[],lastMissionReset:null,
+    missionProgress:{}
+};
+
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+// ==========================================
+// TELEGRAM & INIT
+// ==========================================
 function resize(){W=Math.max(window.innerWidth,360);H=Math.max(window.innerHeight,640);canvas.width=W;canvas.height=H;}
-resize();window.addEventListener('resize',resize);setTimeout(resize,100);
+resize();window.addEventListener('resize',resize);
+
 let tg=window.Telegram?.WebApp,tgUser={id:null,first_name:'Пилот',last_name:'',username:''};
 if(tg){tg.ready();tg.expand();if(tg.safeAreaInset)safeTop=Math.max(100,tg.safeAreaInset.top+50);document.documentElement.style.setProperty('--safe-top',safeTop+'px');if(tg.initDataUnsafe?.user){const u=tg.initDataUnsafe.user;tgUser={id:u.id,first_name:u.first_name||'Пилот',last_name:u.last_name||'',username:u.username||''};}}
+
 function vibrate(t='light'){if(tg?.HapticFeedback){if(t==='success')tg.HapticFeedback.notificationOccurred('success');else if(t==='error')tg.HapticFeedback.notificationOccurred('error');else if(t==='heavy')tg.HapticFeedback.impactOccurred('heavy');else tg.HapticFeedback.impactOccurred('light');}}
-let audioCtx=null;function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-function playSound(type){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);const now=audioCtx.currentTime;if(type==='jump'){o.frequency.setValueAtTime(400,now);o.frequency.exponentialRampToValueAtTime(600,now+0.1);g.gain.setValueAtTime(0.08,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);o.start(now);o.stop(now+0.1);}else if(type==='collect'){o.frequency.setValueAtTime(800,now);o.frequency.exponentialRampToValueAtTime(1200,now+0.15);g.gain.setValueAtTime(0.08,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.15);o.start(now);o.stop(now+0.15);}else if(type==='crash'){o.type='sawtooth';o.frequency.setValueAtTime(200,now);o.frequency.exponentialRampToValueAtTime(50,now+0.3);g.gain.setValueAtTime(0.1,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.3);o.start(now);o.stop(now+0.3);}}
-function setRandomWeather(){const r=Math.random();currentWeather=r<0.5?WEATHER[0]:r<0.7?WEATHER[1]:r<0.8?WEATHER[2]:r<0.9?WEATHER[3]:WEATHER[4];raindrops=[];snowflakes=[];if(currentWeather.id==='rain'||currentWeather.id==='storm')for(let i=0;i<50;i++)raindrops.push({x:Math.random()*W,y:Math.random()*H,speed:10+Math.random()*10});if(currentWeather.id==='snow')for(let i=0;i<40;i++)snowflakes.push({x:Math.random()*W,y:Math.random()*H,speed:1+Math.random()*2,size:2+Math.random()*3});const el=$('weatherInd');if(currentWeather.id!=='clear'){$('weatherIcon').textContent=currentWeather.icon;$('weatherText').textContent=currentWeather.name;el.classList.add('show');}else el.classList.remove('show');}
-function drawWeather(){if(currentWeather.id==='rain'||currentWeather.id==='storm'){ctx.strokeStyle='rgba(150,200,255,0.4)';ctx.lineWidth=1;raindrops.forEach(r=>{ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-2,r.y+15);ctx.stroke();r.y+=r.speed*(deltaTime/16);r.x-=2;if(r.y>H){r.y=-10;r.x=Math.random()*W;}});}if(currentWeather.id==='snow'){ctx.fillStyle='rgba(255,255,255,0.8)';snowflakes.forEach(s=>{ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();s.y+=s.speed*(deltaTime/16);s.x+=Math.sin(frame*0.02+s.y*0.01)*0.5;if(s.y>H){s.y=-10;s.x=Math.random()*W;}});}if(currentWeather.id==='fog'){ctx.fillStyle='rgba(200,200,220,0.15)';ctx.fillRect(0,0,W,H);}}
-function checkAchievements(){const unlocked=[];ACHIEVEMENTS.forEach(a=>{if(stats.achievements.includes(a.id))return;let c=0;if(a.stat==='games')c=stats.games;else if(a.stat==='parts')c=stats.parts;else if(a.stat==='rfq')c=stats.rfq;else if(a.stat==='money')c=stats.money;else if(a.stat==='streak')c=stats.streak;else if(a.stat==='legendary')c=stats.legendary;else if(a.stat==='collection')c=stats.collection.length;else if(a.stat==='invites')c=stats.invites;if(c>=a.goal){stats.achievements.push(a.id);stats.money+=a.reward;unlocked.push(a);}});if(unlocked.length)save();return unlocked;}
-function renderAchievements(){const list=$('achievementsList');list.innerHTML=ACHIEVEMENTS.map(a=>{const unlocked=stats.achievements.includes(a.id);let c=0;if(a.stat==='games')c=stats.games;else if(a.stat==='parts')c=stats.parts;else if(a.stat==='rfq')c=stats.rfq;else if(a.stat==='money')c=stats.money;else if(a.stat==='streak')c=stats.streak;else if(a.stat==='legendary')c=stats.legendary;else if(a.stat==='collection')c=stats.collection.length;else if(a.stat==='invites')c=stats.invites;const progress=Math.min(c/a.goal*100,100);return`<div class="achievement-item ${unlocked?'unlocked':'locked'}"><div class="achievement-icon">${a.icon}</div><div class="achievement-info"><div class="achievement-name">${a.name}</div><div class="achievement-desc">${a.desc}</div>${!unlocked?`<div class="achievement-progress"><div class="achievement-progress-fill" style="width:${progress}%"></div></div>`:''}</div><div class="achievement-reward">${unlocked?'✅':'+$'+fmt(a.reward)}</div></div>`;}).join('');}
-function getInviteLink(){return tgUser.id?`https://t.me/${BOT_USERNAME}?start=ref_${tgUser.id}`:'';}
-function shareInvite(){const link=getInviteLink();if(!link){alert('Доступно в Telegram');return;}const text=`🎮 Играю в Aviation Parts Runner!\n✈️ Собираю авиадетали\n💰 Заработал $${fmt(stats.money)}\n\n🎁 Бонус $2500!`;if(tg){tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);stats.invites++;save();updMenu();checkAchievements();}}
-function shareScore(score){const text=`✈️ Aviation Parts Runner\n🏆 Мой результат: $${score.toLocaleString()}\n📦 Деталей: ${parts}\n🎮 Попробуй!`;const link=getInviteLink()||'https://t.me/AviationPartsBot';if(tg)tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);}
-function processDonation(stars){const bonuses={50:10000,100:25000,500:150000};alert(`⭐ Telegram Stars скоро!\nБонус: +$${fmt(bonuses[stars]||0)}`);}
-let tutorialStep=1,totalTutorialSteps=4;
-function showTutorial(){if(stats.tutorialDone)return;tutorialStep=1;updateTutorial();$('tutorial').classList.add('show');}
-function updateTutorial(){document.querySelectorAll('.tutorial-step').forEach(s=>s.classList.remove('active'));document.querySelector(`.tutorial-step[data-step="${tutorialStep}"]`)?.classList.add('active');let dots='';for(let i=1;i<=totalTutorialSteps;i++)dots+=`<div class="tutorial-dot ${i===tutorialStep?'active':''}"></div>`;$('tutorialDots').innerHTML=dots;$('tutorialNext').textContent=tutorialStep===totalTutorialSteps?'Начать!':'Далее';}
-function nextTutorial(){if(tutorialStep<totalTutorialSteps){tutorialStep++;updateTutorial();}else{stats.tutorialDone=true;save();$('tutorial').classList.remove('show');}}
-async function fetchLeaderboard(sortBy='best_score'){try{const res=await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=${sortBy}.desc&limit=50`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'}});if(res.ok)return await res.json();}catch(e){console.error('LB:',e);}return[];}
-async function submitScore(score,earnedMoney){if(!tgUser.id)return;try{const checkRes=await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}&select=*`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});const existing=await checkRes.json();const data={first_name:tgUser.first_name,last_name:tgUser.last_name,username:tgUser.username,best_score:score,total_money:stats.money,total_parts:stats.parts,total_games:stats.games,rfq_completed:stats.rfq,current_plane:stats.plane};if(existing?.length>0){data.best_score=Math.max(existing[0].best_score,score);await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}`,{method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(data)});}else{data.telegram_id=tgUser.id;await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(data)});}}catch(e){console.error('Submit:',e);}}
-let currentLbSort='best_score';async function renderLeaderboard(sortBy=currentLbSort){currentLbSort=sortBy;const list=$('lbList');list.innerHTML='<div class="lb-loading">⏳ Загрузка...</div>';document.querySelectorAll('.lb-tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.tab===(sortBy==='best_score'?'score':'money')));const data=await fetchLeaderboard(sortBy);if(!data?.length){list.innerHTML='<div class="lb-empty"><div style="font-size:40px;margin-bottom:10px;">🏆</div><div>Будь первым! 🚀</div></div>';return;}list.innerHTML=data.map((p,i)=>{const name=[p.first_name,p.last_name].filter(Boolean).join(' ')||'Пилот';const isMe=tgUser.id&&p.telegram_id===tgUser.id;const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';const planeIcon=(PLANES.find(pl=>pl.id===p.current_plane)||PLANES[0]).icon;const mainValue=sortBy==='best_score'?p.best_score.toLocaleString():'$'+fmt(p.total_money);return`<div class="lb-item ${isMe?'me':''}"><div class="lb-rank ${rankClass}">${i+1}</div><div class="lb-avatar">${planeIcon}</div><div class="lb-info"><div class="lb-name">${name}${isMe?' (вы)':''}</div><div class="lb-stats">🎮 ${p.total_games} • 📦 ${p.total_parts}</div></div><div class="lb-score">${mainValue}</div></div>`;}).join('');}
-function checkStreak(){const today=new Date().toDateString();if(!stats.lastPlay)stats.streak=1;else{const diff=Math.floor((new Date(today)-new Date(stats.lastPlay))/(1000*60*60*24));if(diff===1)stats.streak=Math.min(stats.streak+1,30);else if(diff>1)stats.streak=1;}stats.lastPlay=today;save();}
-function streakBonus(){if(stats.streak>=30)return 2;if(stats.streak>=14)return 1.5;if(stats.streak>=7)return 1.3;if(stats.streak>=3)return 1.15;return 1;}
-function aogOk(){return localStorage.getItem('lastAog')!==new Date().toDateString();}
-function startAog(){if(!aogOk())return;localStorage.setItem('lastAog',new Date().toDateString());isAog=true;aogT=60*60;showRfq();}
+
+// ==========================================
+// AUDIO ENGINE
+// ==========================================
+let audioCtx=null,masterGain=null,bgmOsc=null,bgmGain=null;
+
+function initAudio(){
+    if(audioCtx)return;
+    try{
+        audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+        masterGain=audioCtx.createGain();
+        masterGain.gain.value=0.3;
+        masterGain.connect(audioCtx.destination);
+    }catch(e){}
+}
+
+function playBGM(){
+    if(!audioCtx||bgmOsc)return;
+    bgmGain=audioCtx.createGain();
+    bgmGain.gain.value=0.08;
+    bgmGain.connect(masterGain);
+    
+    // Simple ambient drone
+    bgmOsc=audioCtx.createOscillator();
+    bgmOsc.type='sine';
+    bgmOsc.frequency.value=110;
+    bgmOsc.connect(bgmGain);
+    bgmOsc.start();
+    
+    // Add subtle modulation
+    const lfo=audioCtx.createOscillator();
+    const lfoGain=audioCtx.createGain();
+    lfo.frequency.value=0.5;
+    lfoGain.gain.value=5;
+    lfo.connect(lfoGain);
+    lfoGain.connect(bgmOsc.frequency);
+    lfo.start();
+    
+    musicPlaying=true;
+    $('musicToggle').classList.remove('muted');
+}
+
+function stopBGM(){
+    if(bgmOsc){bgmOsc.stop();bgmOsc=null;bgmGain=null;}
+    musicPlaying=false;
+    $('musicToggle').classList.add('muted');
+}
+
+function toggleMusic(){
+    initAudio();
+    if(musicPlaying)stopBGM();else playBGM();
+}
+
+function playSound(type,freq=440,dur=0.1){
+    if(!audioCtx)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(masterGain);
+    const now=audioCtx.currentTime;
+    
+    switch(type){
+        case'jump':
+            o.frequency.setValueAtTime(400,now);
+            o.frequency.exponentialRampToValueAtTime(800,now+0.1);
+            g.gain.setValueAtTime(0.15,now);
+            g.gain.exponentialRampToValueAtTime(0.01,now+0.1);
+            o.start(now);o.stop(now+0.1);
+            break;
+        case'collect':
+            o.type='triangle';
+            o.frequency.setValueAtTime(freq,now);
+            o.frequency.exponentialRampToValueAtTime(freq*2,now+0.15);
+            g.gain.setValueAtTime(0.12,now);
+            g.gain.exponentialRampToValueAtTime(0.01,now+0.15);
+            o.start(now);o.stop(now+0.15);
+            break;
+        case'crash':
+            o.type='sawtooth';
+            o.frequency.setValueAtTime(200,now);
+            o.frequency.exponentialRampToValueAtTime(40,now+0.4);
+            g.gain.setValueAtTime(0.2,now);
+            g.gain.exponentialRampToValueAtTime(0.01,now+0.4);
+            o.start(now);o.stop(now+0.4);
+            break;
+        case'boss':
+            o.type='square';
+            o.frequency.setValueAtTime(80,now);
+            o.frequency.exponentialRampToValueAtTime(40,now+0.5);
+            g.gain.setValueAtTime(0.15,now);
+            g.gain.exponentialRampToValueAtTime(0.01,now+0.5);
+            o.start(now);o.stop(now+0.5);
+            break;
+        case'bosshit':
+            o.type='sawtooth';
+            o.frequency.setValueAtTime(300,now);
+            o.frequency.exponentialRampToValueAtTime(100,now+0.2);
+            g.gain.setValueAtTime(0.2,now);
+            g.gain.exponentialRampToValueAtTime(0.01,now+0.2);
+            o.start(now);o.stop(now+0.2);
+            break;
+        case'victory':
+            [523,659,784,1047].forEach((f,i)=>{
+                const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
+                o2.connect(g2);g2.connect(masterGain);
+                o2.frequency.value=f;
+                g2.gain.setValueAtTime(0.1,now+i*0.15);
+                g2.gain.exponentialRampToValueAtTime(0.01,now+i*0.15+0.3);
+                o2.start(now+i*0.15);o2.stop(now+i*0.15+0.3);
+            });
+            return;
+        case'levelup':
+            [440,554,659,880].forEach((f,i)=>{
+                const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
+                o2.type='triangle';
+                o2.connect(g2);g2.connect(masterGain);
+                o2.frequency.value=f;
+                g2.gain.setValueAtTime(0.15,now+i*0.1);
+                g2.gain.exponentialRampToValueAtTime(0.01,now+i*0.1+0.2);
+                o2.start(now+i*0.1);o2.stop(now+i*0.1+0.2);
+            });
+            return;
+    }
+}
+
+// ==========================================
+// XP & LEVEL SYSTEM
+// ==========================================
+function addXp(amount){
+    if(has('xpboost'))amount=Math.floor(amount*1.5);
+    stats.xp+=amount;
+    while(stats.xp>=CFG.XP_PER_LEVEL){
+        stats.xp-=CFG.XP_PER_LEVEL;
+        stats.level++;
+        playSound('levelup');
+        alert2('⭐',`LEVEL ${stats.level}!`,'cyan');
+    }
+    stats.bpXp+=amount;
+    while(stats.bpXp>=1000&&stats.bpLevel<BATTLE_PASS.length){
+        stats.bpXp-=1000;
+        stats.bpLevel++;
+    }
+    save();
+}
+
+function getXpProgress(){return stats.xp/CFG.XP_PER_LEVEL*100;}
+
+// ==========================================
+// DAILY MISSIONS
+// ==========================================
+function resetDailyMissions(){
+    const today=new Date().toDateString();
+    if(stats.lastMissionReset===today)return;
+    
+    // Pick 3 random missions
+    const shuffled=[...DAILY_MISSIONS].sort(()=>Math.random()-0.5);
+    stats.dailyMissions=shuffled.slice(0,3).map(m=>({...m,completed:false}));
+    stats.missionProgress={};
+    stats.lastMissionReset=today;
+    save();
+}
+
+function updateMissionProgress(type,amount){
+    stats.dailyMissions.forEach(m=>{
+        if(m.completed||m.type!==type)return;
+        stats.missionProgress[m.id]=(stats.missionProgress[m.id]||0)+amount;
+        if(stats.missionProgress[m.id]>=m.goal){
+            m.completed=true;
+            stats.money+=m.reward;
+            addXp(m.xp);
+            alert2('✅',`Миссия: +$${m.reward}`,'green');
+            vibrate('success');
+        }
+    });
+    save();
+}
+
+function renderMissions(){
+    const list=$('missionsList');
+    if(!stats.dailyMissions.length){resetDailyMissions();}
+    list.innerHTML=stats.dailyMissions.map(m=>{
+        const prog=Math.min(stats.missionProgress[m.id]||0,m.goal);
+        const pct=prog/m.goal*100;
+        return`<div class="mission-item ${m.completed?'completed':''}">
+            <div class="mission-icon">${m.completed?'✅':'📋'}</div>
+            <div class="mission-info">
+                <div class="mission-name">${m.name}</div>
+                <div class="mission-progress"><div class="mission-progress-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div class="mission-reward">${m.completed?'✓':'+$'+m.reward}</div>
+        </div>`;
+    }).join('');
+}
+
+// ==========================================
+// BATTLE PASS
+// ==========================================
+function renderBattlePass(){
+    $('bpLevel').textContent=stats.bpLevel;
+    $('bpXp').textContent=stats.bpXp;
+    $('bpBarFill').style.width=(stats.bpXp/1000*100)+'%';
+    
+    $('bpTiers').innerHTML=BATTLE_PASS.map(t=>{
+        const unlocked=stats.bpLevel>=t.tier;
+        const current=stats.bpLevel===t.tier;
+        const freeClaimed=stats.bpClaimed.includes(`free_${t.tier}`);
+        const premClaimed=stats.bpClaimed.includes(`prem_${t.tier}`);
+        
+        return`<div class="bp-tier ${unlocked?'unlocked':''} ${current?'current':''}">
+            <div class="bp-tier-num">${t.tier}</div>
+            <div class="bp-tier-rewards">
+                <div class="bp-reward ${freeClaimed?'claimed':''}" data-tier="${t.tier}" data-type="free">
+                    <div class="bp-reward-icon">${t.free.icon}</div>
+                    <div class="bp-reward-text">${freeClaimed?'✓':t.free.type==='money'?'$'+t.free.amount:'+'+t.free.amount+' XP'}</div>
+                </div>
+                <div class="bp-reward premium ${premClaimed?'claimed':''}" data-tier="${t.tier}" data-type="premium">
+                    <div class="bp-reward-icon">${t.premium.icon}</div>
+                    <div class="bp-reward-text">${premClaimed?'✓':'Premium'}</div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ==========================================
+// PVP SYSTEM
+// ==========================================
+async function findOpponent(){
+    $('pvpOpponentName').textContent='Поиск...';
+    $('pvpOpponentScore').textContent='';
+    $('pvpOpponentLevel').textContent='';
+    
+    try{
+        const data=await fetchLeaderboard('best_score');
+        if(data?.length){
+            const filtered=data.filter(p=>p.telegram_id!==tgUser.id);
+            if(filtered.length){
+                pvpOpponent=filtered[Math.floor(Math.random()*Math.min(filtered.length,10))];
+                $('pvpOpponentName').textContent=[pvpOpponent.first_name,pvpOpponent.last_name].filter(Boolean).join(' ')||'Пилот';
+                $('pvpOpponentScore').textContent=`Рекорд: $${pvpOpponent.best_score.toLocaleString()}`;
+                $('pvpOpponentLevel').textContent=`Уровень ${Math.floor(pvpOpponent.total_games/10)+1}`;
+                pvpTarget=pvpOpponent.best_score;
+                return;
+            }
+        }
+    }catch(e){}
+    
+    // Fallback bot
+    pvpOpponent={first_name:'Bot',best_score:5000+Math.floor(Math.random()*10000)};
+    $('pvpOpponentName').textContent='🤖 Bot Pilot';
+    $('pvpOpponentScore').textContent=`Рекорд: $${pvpOpponent.best_score.toLocaleString()}`;
+    $('pvpOpponentLevel').textContent='Уровень '+Math.floor(Math.random()*10+1);
+    pvpTarget=pvpOpponent.best_score;
+}
+
+// ==========================================
+// BOSS SYSTEM
+// ==========================================
+function spawnBoss(){
+    const b=BOSSES[Math.min(Math.floor(stats.bosses/3),BOSSES.length-1)];
+    boss={...b,currentHp:b.hp,x:W-100,y:H/2,phase:0,attackTimer:0};
+    bossActive=true;
+    $('bossHud').classList.add('show');
+    $('bossName').textContent=`⚠️ ${b.name} ⚠️`;
+    updateBossHp();
+    playSound('boss');
+    vibrate('heavy');
+}
+
+function updateBossHp(){
+    if(!boss)return;
+    const pct=boss.currentHp/boss.hp*100;
+    $('bossHpFill').style.width=pct+'%';
+    $('bossHp').textContent=Math.ceil(pct);
+}
+
+function damageBoss(dmg){
+    if(!boss)return;
+    boss.currentHp-=dmg;
+    updateBossHp();
+    playSound('bosshit');
+    vibrate('light');
+    
+    // Screen shake effect
+    canvas.style.transform=`translate(${(Math.random()-0.5)*10}px,${(Math.random()-0.5)*10}px)`;
+    setTimeout(()=>canvas.style.transform='',50);
+    
+    if(boss.currentHp<=0){
+        defeatBoss();
+    }
+}
+
+function defeatBoss(){
+    bossActive=false;
+    stats.bosses++;
+    const reward=boss.reward;
+    money+=money*reward;
+    addXp(boss.xp);
+    updateMissionProgress('boss',1);
+    $('bossHud').classList.remove('show');
+    playSound('victory');
+    alert2('🏆',`БОСС ПОВЕРЖЕН! x${reward}`,'gold');
+    vibrate('success');
+    boss=null;
+}
+
+function updateBoss(){
+    if(!boss||!bossActive)return;
+    
+    // Boss movement
+    boss.y+=Math.sin(frame*0.03)*2;
+    boss.attackTimer++;
+    
+    // Attack pattern
+    if(boss.attackTimer>120){
+        boss.attackTimer=0;
+        // Spawn projectile
+        projectiles.push({
+            x:boss.x-30,
+            y:boss.y,
+            vx:-8,
+            vy:(player.y-boss.y)*0.02
+        });
+        playSound('collect',100,0.1);
+    }
+}
+
+function drawBoss(){
+    if(!boss)return;
+    ctx.save();
+    ctx.translate(boss.x,boss.y);
+    
+    // Glow effect
+    ctx.shadowColor='#e74c3c';
+    ctx.shadowBlur=30+Math.sin(frame*0.1)*10;
+    
+    // Boss sprite
+    ctx.font='80px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(boss.icon,0,0);
+    
+    ctx.shadowBlur=0;
+    ctx.restore();
+}
+
+function updateProjectiles(){
+    for(let i=projectiles.length-1;i>=0;i--){
+        const p=projectiles[i];
+        p.x+=p.vx*(deltaTime/16);
+        p.y+=p.vy*(deltaTime/16);
+        
+        // Check collision with player
+        const dx=player.x-p.x,dy=player.y-p.y;
+        if(Math.sqrt(dx*dx+dy*dy)<40){
+            if(shieldOn){
+                shieldOn=false;shieldT=0;
+                vibrate('heavy');
+            }else{
+                gameOver();
+                return;
+            }
+            projectiles.splice(i,1);
+            continue;
+        }
+        
+        if(p.x<-50)projectiles.splice(i,1);
+    }
+}
+
+function drawProjectiles(){
+    ctx.fillStyle='#e74c3c';
+    projectiles.forEach(p=>{
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,12,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle='#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,6,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle='#e74c3c';
+    });
+}
+
+// ==========================================
+// GAME LOGIC
+// ==========================================
 function has(id){return stats.upgrades.includes(id);}
 function planeMult(){return(PLANES.find(p=>p.id===stats.plane)||{mult:1}).mult;}
-function moneyMult(){let m=planeMult();if(has('cargo'))m*=1.25;m*=streakBonus();if(isAog)m*=3;return m;}
+function moneyMult(){let m=planeMult();if(has('cargo'))m*=1.25;if(gameMode==='boss'&&boss)m*=2;return m;}
 function magnetR(){return CFG.MAGNET*(has('magnet')?1.5:1);}
-function genRfq(){const n=Math.floor(Math.random()*3)+2;const p=[];const u=new Set();for(let i=0;i<n;i++){let d;do{const r=Math.random();if(r<0.5)d=PARTS[Math.floor(Math.random()*3)];else if(r<0.8)d=PARTS[3+Math.floor(Math.random()*3)];else if(r<0.95)d=PARTS[6+Math.floor(Math.random()*3)];else d=PARTS[9+Math.floor(Math.random()*2)];}while(u.has(d.id));u.add(d.id);p.push({...d,qty:Math.floor(Math.random()*2)+1});}return{num:String(Math.floor(Math.random()*900)+100),client:CLIENTS[Math.floor(Math.random()*CLIENTS.length)],parts:p,reward:p.reduce((s,x)=>s+x.value*x.qty,0)*2};}
-function showRfq(){rfq=genRfq();rfqProg={};rfq.parts.forEach(p=>rfqProg[p.id]=0);$('rfqNumber').textContent=rfq.num;$('rfqClient').textContent=rfq.client;$('rfqReward').textContent=(rfq.reward*(isAog?3:1)).toLocaleString();$('rfqParts').innerHTML=rfq.parts.map(p=>`<div class="rfq-part"><div class="rfq-part-icon rarity-${p.rarity}">${p.icon}</div><div class="rfq-part-info"><div class="rfq-part-name">${p.name}</div><div class="rfq-part-rarity text-${p.rarity}">${p.rarity.toUpperCase()}</div></div><div class="rfq-part-qty">×${p.qty}</div></div>`).join('');show('rfqScreen');}
-function updRfqHud(){if(!rfq){$('hudRfq').innerHTML='—';return;}$('hudRfq').innerHTML=rfq.parts.map(p=>`<div class="hud-rfq-item ${rfqProg[p.id]>=p.qty?'done':''}">${p.icon}${rfqProg[p.id]}/${p.qty}</div>`).join('');}
-function rfqDone(){return rfq&&rfq.parts.every(p=>rfqProg[p.id]>=p.qty);}
-function getParticle(){return particlePool.length?particlePool.pop():{};}
-function releaseParticle(p){if(particlePool.length<maxParticles)particlePool.push(p);}
-function reset(){W=canvas.width||400;H=canvas.height||700;player={x:CFG.PLAYER.X,y:H/2,v:0,rot:0};obstacles=[];items=[];particles.forEach(releaseParticle);particles=[];money=0;parts=0;frame=0;speed=1;shieldOn=has('shield');shieldT=shieldOn?CFG.SHIELD:0;turboOn=false;turboT=0;newParts=[];newAchievements=[];if(rfq){rfqProg={};rfq.parts.forEach(p=>rfqProg[p.id]=0);}setRandomWeather();updHud();}
-function start(){initAudio();resize();reset();state='playing';show(null);$('hud').classList.add('visible');$('aogBanner').classList.toggle('show',isAog);}
-function gameOver(){state='over';playSound('crash');vibrate('error');const done=rfqDone();let earn=Math.floor(money*moneyMult());if(done&&rfq){earn+=rfq.reward*(isAog?3:1);stats.rfq++;}stats.games++;stats.parts+=parts;stats.money+=earn;if(earn>stats.best)stats.best=earn;save();submitScore(earn,earn);newAchievements=checkAchievements();$('goMoney').textContent=earn.toLocaleString();$('goParts').textContent=parts;$('goBest').textContent='$'+fmt(stats.best);const el=$('goRfq');if(rfq){el.className=done?'gameover-rfq success':'gameover-rfq failed';$('goRfqText').textContent=done?`✅ RFQ #${rfq.num} +$${(rfq.reward*(isAog?3:1)).toLocaleString()}`:`❌ RFQ #${rfq.num}`;el.style.display='block';}else el.style.display='none';if(newParts.length){$('goNew').style.display='block';$('goNewIcons').innerHTML=newParts.map(p=>`<span>${p.icon}</span>`).join('');}else $('goNew').style.display='none';if(newAchievements.length){$('goAchievement').style.display='block';$('goAchievementName').textContent=newAchievements.map(a=>a.name).join(', ');}else $('goAchievement').style.display='none';$('hud').classList.remove('visible');$('aogBanner').classList.remove('show');$('weatherInd').classList.remove('show');show('gameoverScreen');isAog=false;rfq=null;for(let i=0;i<15;i++){const p=getParticle();Object.assign(p,{x:player.x,y:player.y,vx:(Math.random()-0.5)*12,vy:(Math.random()-0.5)*12,size:Math.random()*5+2,color:`hsl(${Math.random()*60+10},100%,50%)`,life:1});particles.push(p);}}
+
+function reset(){
+    W=canvas.width||400;H=canvas.height||700;
+    player={x:CFG.PLAYER.X,y:H/2,v:0,rot:0};
+    obstacles=[];items=[];particles=[];projectiles=[];
+    money=0;parts=0;score=0;frame=0;speed=1;
+    shieldOn=has('shield');shieldT=shieldOn?CFG.SHIELD:0;
+    turboOn=false;turboT=0;
+    boss=null;bossActive=false;
+    $('bossHud').classList.remove('show');
+    
+    // Pick active mission for HUD
+    currentMission=stats.dailyMissions.find(m=>!m.completed)||null;
+    missionProgress=currentMission?stats.missionProgress[currentMission.id]||0:0;
+    updHud();
+}
+
+function start(mode='normal'){
+    initAudio();
+    playBGM();
+    resize();
+    gameMode=mode;
+    reset();
+    
+    if(mode==='boss'){
+        setTimeout(()=>spawnBoss(),2000);
+    }
+    
+    state='playing';
+    show(null);
+    $('hud').classList.add('visible');
+}
+
+function gameOver(){
+    state='over';
+    stopBGM();
+    playSound('crash');
+    vibrate('error');
+    
+    const earnedMoney=Math.floor(money*moneyMult());
+    const earnedXp=Math.floor(parts*10+score/100);
+    
+    stats.games++;
+    stats.parts+=parts;
+    stats.money+=earnedMoney;
+    if(earnedMoney>stats.best)stats.best=earnedMoney;
+    
+    addXp(earnedXp);
+    updateMissionProgress('parts',parts);
+    updateMissionProgress('money',earnedMoney);
+    updateMissionProgress('games',1);
+    updateMissionProgress('score',score);
+    
+    // PvP result
+    if(gameMode==='pvp'&&pvpOpponent){
+        if(earnedMoney>pvpTarget){
+            stats.pvpWins++;
+            updateMissionProgress('pvp',1);
+            $('goIcon').textContent='🏆';
+            alert2('⚔️','ПОБЕДА В ДУЭЛИ!','gold');
+        }else{
+            stats.pvpLosses++;
+            $('goIcon').textContent='💀';
+        }
+    }else{
+        $('goIcon').textContent='✈️';
+    }
+    
+    save();
+    submitScore(earnedMoney,earnedMoney);
+    
+    $('goMoney').textContent=earnedMoney.toLocaleString();
+    $('goXp').textContent=earnedXp;
+    $('goParts').textContent=parts;
+    $('goScore').textContent=score.toLocaleString();
+    $('goBest').textContent='$'+fmt(stats.best);
+    
+    if(gameMode==='boss'&&!bossActive&&stats.bosses>0){
+        $('goBoss').style.display='block';
+        $('goBossText').textContent='👹 Босс повержен! x'+boss?.reward||5;
+    }else{
+        $('goBoss').style.display='none';
+    }
+    
+    $('hud').classList.remove('visible');
+    $('bossHud').classList.remove('show');
+    show('gameoverScreen');
+    
+    // Explosion particles
+    for(let i=0;i<20;i++){
+        particles.push({x:player.x,y:player.y,vx:(Math.random()-0.5)*15,vy:(Math.random()-0.5)*15,size:Math.random()*6+2,color:`hsl(${Math.random()*60},100%,50%)`,life:1});
+    }
+}
+
 function jump(){if(state!=='playing')return;player.v=CFG.PLAYER.JUMP;playSound('jump');vibrate('light');}
 function turbo(){if(!has('turbo')||turboOn)return;turboOn=true;turboT=CFG.TURBO;vibrate('heavy');}
-function spawnObs(){const minT=safeTop+CFG.OBS.MIN_H;const maxT=H-CFG.OBS.GAP-CFG.OBS.MIN_H-80;const top=Math.random()*(maxT-minT)+minT;obstacles.push({x:W,top,bot:top+CFG.OBS.GAP,pass:false});}
-function spawnPart(){let r=Math.random(),c=0,d=PARTS[0];for(const p of PARTS){c+=p.chance;if(r<c){d=p;break;}}const y=safeTop+100+Math.random()*(H-safeTop-200);items.push({x:W+50,y,...d,col:false});if(d.rarity==='legendary'){alert2('⭐','LEGENDARY!','gold');vibrate('heavy');stats.legendary++;}else if(d.rarity==='epic')alert2('💎','EPIC!','purple');}
-function updPlayer(){const dt=deltaTime/16;player.v+=CFG.PLAYER.GRAVITY*dt;player.v=Math.min(player.v,CFG.PLAYER.MAX_V);player.y+=player.v*dt;player.rot=Math.min(Math.max(player.v*0.05,-0.4),0.6);if(player.y<safeTop+40){player.y=safeTop+40;player.v=0;}if(player.y>H-80){if(shieldOn){player.y=H-80;player.v=CFG.PLAYER.JUMP;shieldOn=false;shieldT=0;vibrate('heavy');}else gameOver();}}
-function updObs(){const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*currentWeather.speedMod*(deltaTime/16);const rate=Math.floor(CFG.OBS.SPAWN/speed/currentWeather.spawnMod);if(frame%rate===0)spawnObs();for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i];o.x-=sp;if(!o.pass&&player.x+35>o.x&&player.x-40<o.x+CFG.OBS.W){if(player.y-25<o.top||player.y+25>o.bot){if(shieldOn){shieldOn=false;shieldT=0;vibrate('heavy');}else{gameOver();return;}}}if(!o.pass&&o.x+CFG.OBS.W<player.x)o.pass=true;if(o.x<-CFG.OBS.W)obstacles.splice(i,1);}}
-function updParts(){const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*currentWeather.speedMod*(deltaTime/16);if(frame%CFG.PARTS.SPAWN===0)spawnPart();const mr=magnetR();for(let i=items.length-1;i>=0;i--){const p=items[i];p.x-=sp;if(!p.col){const dx=player.x-p.x,dy=player.y-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<mr&&d>40){const f=(mr-d)/mr*0.2;p.x+=dx*f;p.y+=dy*f;}if(d<45){p.col=true;money+=p.value;parts++;if(!stats.collection.includes(p.id)){stats.collection.push(p.id);newParts.push(p);save();}if(rfq&&rfqProg[p.id]!==undefined){rfqProg[p.id]++;updRfqHud();if(rfqDone())alert2('✅','RFQ DONE!','green');}updHud();popup(p);for(let j=0;j<6;j++){const a=(j/6)*Math.PI*2;const pt=getParticle();Object.assign(pt,{x:p.x,y:p.y,vx:Math.cos(a)*4,vy:Math.sin(a)*4,size:3,color:rColor(p.rarity),life:0.6});particles.push(pt);}playSound('collect');vibrate('light');}}if(p.x<-50||p.col)items.splice(i,1);}}
-function updTimers(){if(isAog&&aogT>0){aogT--;$('aogTimer').textContent=Math.ceil(aogT/60);if(aogT<=0)gameOver();}if(shieldOn&&shieldT>0){shieldT--;$('shieldFill').style.width=(shieldT/CFG.SHIELD*100)+'%';$('shieldBar').classList.add('show');}else $('shieldBar').classList.remove('show');if(turboOn&&turboT>0){turboT--;if(turboT<=0)turboOn=false;}if(speed<CFG.DIFF.MAX)speed+=CFG.DIFF.INC;}
-function updParticles(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx*(deltaTime/16);p.y+=p.vy*(deltaTime/16);p.vy+=0.15;p.life-=0.02;p.size*=0.97;if(p.life<=0){releaseParticle(p);particles.splice(i,1);}}}
-function drawBg(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0a1a');g.addColorStop(0.4,'#1a1a3a');g.addColorStop(0.7,'#2a3a5a');g.addColorStop(1,'#1a3a5a');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(255,255,255,0.4)';for(let i=0;i<50;i++){const x=(i*73+frame*0.03)%W,y=(i*47)%(H*0.5);ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();}ctx.fillStyle='rgba(255,255,230,0.9)';ctx.beginPath();ctx.arc(W-50,70,25,0,Math.PI*2);ctx.fill();ctx.fillStyle='#1a2a3a';ctx.fillRect(0,H-60,W,60);ctx.fillStyle='rgba(255,255,255,0.2)';const off=(frame*3*speed)%80;for(let x=-off;x<W+80;x+=80)ctx.fillRect(x,H-35,40,6);}
-function drawPlayer(){if(player.y<50||player.y>H-50)player.y=H/2;if(player.x<50)player.x=120;ctx.save();ctx.translate(player.x,player.y);const wb=Math.sin(frame*0.08)*3;ctx.rotate(player.rot+Math.sin(frame*0.05)*0.05);ctx.translate(0,wb);if(shieldOn){ctx.strokeStyle=`rgba(0,212,255,${0.3+Math.sin(frame*0.1)*0.2})`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,50,0,Math.PI*2);ctx.stroke();}if(turboOn){ctx.shadowColor='#00d4ff';ctx.shadowBlur=30;}const icon=(PLANES.find(p=>p.id===stats.plane)||{icon:'✈️'}).icon;ctx.font='50px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icon,0,0);ctx.shadowBlur=0;if(state==='playing'&&frame%3===0){const pt=getParticle();Object.assign(pt,{x:player.x-40,y:player.y+wb,vx:-2-Math.random()*2,vy:(Math.random()-0.5)*2,size:4+Math.random()*3,color:turboOn?'rgba(0,212,255,0.6)':'rgba(255,150,50,0.6)',life:0.4});particles.push(pt);}ctx.restore();}
-function drawObs(){obstacles.forEach(o=>{const g=ctx.createLinearGradient(o.x,0,o.x+CFG.OBS.W,0);g.addColorStop(0,'#1a3a5c');g.addColorStop(0.5,'#2a5a8c');g.addColorStop(1,'#1a3a5c');ctx.fillStyle=g;ctx.fillRect(o.x,0,CFG.OBS.W,o.top);ctx.fillRect(o.x,o.bot,CFG.OBS.W,H-o.bot);ctx.fillStyle='#3a6a9c';ctx.fillRect(o.x-5,o.top-20,CFG.OBS.W+10,20);ctx.fillRect(o.x-5,o.bot,CFG.OBS.W+10,20);if(Math.floor(frame/30)%2===0){ctx.fillStyle='#ff4444';ctx.beginPath();ctx.arc(o.x+CFG.OBS.W/2,o.top-10,4,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(o.x+CFG.OBS.W/2,o.bot+10,4,0,Math.PI*2);ctx.fill();}});}
-function drawParts(){items.forEach(p=>{if(p.col)return;ctx.save();ctx.translate(p.x,p.y);const pulse=1+Math.sin(frame*0.1)*0.1;ctx.scale(pulse,pulse);const glow={common:'rgba(150,150,150,0.3)',uncommon:'rgba(46,204,113,0.5)',rare:'rgba(74,108,247,0.6)',epic:'rgba(155,89,182,0.7)',legendary:'rgba(240,185,11,0.9)'};ctx.shadowColor=glow[p.rarity];ctx.shadowBlur=p.rarity==='legendary'?25:15;const bg={common:'#4a4a4a',uncommon:'#27ae60',rare:'#3498db',epic:'#9b59b6',legendary:'#f39c12'};ctx.fillStyle=bg[p.rarity];ctx.beginPath();ctx.arc(0,0,20,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.font='18px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.icon,0,0);ctx.restore();if(p.rarity!=='common'){ctx.font='bold 8px Inter';ctx.textAlign='center';ctx.fillStyle=rColor(p.rarity);ctx.fillText('$'+fmt(p.value),p.x,p.y+30);}});}
-function drawParticles(){particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
-function updHud(){$('hudMoney').textContent=money.toLocaleString();$('hudParts').textContent='📦 '+parts;$('hudSpeed').textContent='⚡ x'+speed.toFixed(1);$('hudStreak').textContent='🔥 x'+streakBonus().toFixed(1);updRfqHud();$('pwShield').classList.toggle('active',shieldOn);$('pwTurbo').classList.toggle('active',turboOn);}
-function updMenu(){$('menuMoney').textContent=stats.money.toLocaleString();$('menuRfq').textContent=stats.rfq;$('menuParts').textContent=stats.parts;$('menuGames').textContent=stats.games;$('menuBest').textContent='$'+fmt(stats.best);$('menuStreak').textContent='🔥 День '+stats.streak;$('btnAog').style.display=aogOk()?'flex':'none';if(stats.invites>0){$('inviteBonus').style.display='block';$('inviteBonusAmount').textContent=(stats.invites*5000).toLocaleString();$('inviteCount').textContent=stats.invites;}}
-function renderShop(){$('planesList').innerHTML=PLANES.map(p=>{const own=stats.planes.includes(p.id),sel=stats.plane===p.id;return`<div class="plane-item ${own?'owned':''} ${sel?'selected':''}" data-plane="${p.id}"><div class="plane-icon">${p.icon}</div><div class="plane-info"><div class="plane-name">${p.name}</div><div class="plane-stats">${p.desc}</div></div><div class="plane-price ${own?'owned':''}">${own?(sel?'✓':'Выбрать'):'$'+p.price.toLocaleString()}</div></div>`;}).join('');$('upgradesList').innerHTML=UPGRADES.map(u=>{const own=has(u.id);return`<div class="shop-item ${own?'owned':''}" data-upg="${u.id}"><div class="shop-item-icon">${u.icon}</div><div class="shop-item-name">${u.name}</div><div class="shop-item-desc">${u.desc}</div><div class="shop-item-price ${own?'owned':''}">${own?'✓':'$'+u.price.toLocaleString()}</div></div>`;}).join('');document.querySelectorAll('[data-plane]').forEach(el=>{el.onclick=()=>{const id=el.dataset.plane,pl=PLANES.find(p=>p.id===id);if(stats.planes.includes(id)){stats.plane=id;save();renderShop();}else if(stats.money>=pl.price){stats.money-=pl.price;stats.planes.push(id);stats.plane=id;save();renderShop();updMenu();vibrate('success');}};});document.querySelectorAll('[data-upg]').forEach(el=>{el.onclick=()=>{const id=el.dataset.upg,u=UPGRADES.find(x=>x.id===id);if(!has(id)&&stats.money>=u.price){stats.money-=u.price;stats.upgrades.push(id);save();renderShop();updMenu();vibrate('success');}};});}
-function renderColl(){const f=stats.collection.length;$('collectionCount').textContent=f;$('collectionFill').style.width=(f/PARTS.length*100)+'%';$('collectionGrid').innerHTML=PARTS.map(p=>{const found=stats.collection.includes(p.id);return`<div class="collection-item ${found?'found':'locked'}"><div class="collection-item-icon">${found?p.icon:'❓'}</div><div class="collection-item-name">${found?p.name:'???'}</div><div class="collection-item-rarity text-${p.rarity}">${p.rarity}</div></div>`;}).join('');}
+
+function spawnObs(){
+    const gap=CFG.OBS.GAP-(speed-1)*20;
+    const minT=safeTop+CFG.OBS.MIN_H;
+    const maxT=H-gap-CFG.OBS.MIN_H-80;
+    const top=Math.random()*(maxT-minT)+minT;
+    obstacles.push({x:W,top,bot:top+gap,pass:false});
+}
+
+function spawnPart(){
+    let r=Math.random(),c=0,d=PARTS[0];
+    for(const p of PARTS){c+=p.chance;if(r<c){d=p;break;}}
+    const y=safeTop+100+Math.random()*(H-safeTop-200);
+    items.push({x:W+50,y,...d,col:false});
+    if(d.rarity==='legendary'){alert2('⭐','LEGENDARY!','gold');vibrate('heavy');}
+    else if(d.rarity==='epic')alert2('💎','EPIC!','purple');
+}
+
+function updPlayer(){
+    const dt=deltaTime/16;
+    player.v+=CFG.PLAYER.GRAVITY*dt;
+    player.v=Math.min(player.v,CFG.PLAYER.MAX_V);
+    player.y+=player.v*dt;
+    player.rot=Math.min(Math.max(player.v*0.05,-0.4),0.6);
+    if(player.y<safeTop+40){player.y=safeTop+40;player.v=0;}
+    if(player.y>H-80){
+        if(shieldOn){player.y=H-80;player.v=CFG.PLAYER.JUMP;shieldOn=false;shieldT=0;vibrate('heavy');}
+        else gameOver();
+    }
+}
+
+function updObs(){
+    const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*(deltaTime/16);
+    const rate=Math.max(Math.floor(CFG.OBS.SPAWN/speed),40);
+    if(frame%rate===0&&!bossActive)spawnObs();
+    
+    for(let i=obstacles.length-1;i>=0;i--){
+        const o=obstacles[i];
+        o.x-=sp;
+        if(!o.pass&&player.x+30>o.x&&player.x-30<o.x+CFG.OBS.W){
+            if(player.y-20<o.top||player.y+20>o.bot){
+                if(shieldOn){shieldOn=false;shieldT=0;vibrate('heavy');}
+                else{gameOver();return;}
+            }
+        }
+        if(!o.pass&&o.x+CFG.OBS.W<player.x){
+            o.pass=true;
+            score+=100;
+        }
+        if(o.x<-CFG.OBS.W)obstacles.splice(i,1);
+    }
+    
+    // Boss spawn check
+    if(gameMode==='normal'&&score>=CFG.BOSS_SPAWN&&!bossActive&&!boss){
+        spawnBoss();
+    }
+}
+
+function updParts(){
+    const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*(deltaTime/16);
+    if(frame%CFG.PARTS.SPAWN===0)spawnPart();
+    const mr=magnetR();
+    
+    for(let i=items.length-1;i>=0;i--){
+        const p=items[i];
+        p.x-=sp;
+        if(!p.col){
+            const dx=player.x-p.x,dy=player.y-p.y,d=Math.sqrt(dx*dx+dy*dy);
+            if(d<mr&&d>35){const f=(mr-d)/mr*0.25;p.x+=dx*f;p.y+=dy*f;}
+            if(d<40){
+                p.col=true;
+                money+=p.value;
+                parts++;
+                score+=p.value;
+                
+                // Damage boss with collected parts
+                if(bossActive&&boss){
+                    damageBoss(p.dmg);
+                }
+                
+                updHud();
+                popup(p);
+                
+                const freq={common:600,uncommon:800,rare:1000,epic:1200,legendary:1500}[p.rarity];
+                playSound('collect',freq);
+                vibrate('light');
+                
+                for(let j=0;j<6;j++){
+                    const a=(j/6)*Math.PI*2;
+                    particles.push({x:p.x,y:p.y,vx:Math.cos(a)*5,vy:Math.sin(a)*5,size:4,color:rColor(p.rarity),life:0.7});
+                }
+            }
+        }
+        if(p.x<-50||p.col)items.splice(i,1);
+    }
+}
+
+function updTimers(){
+    if(shieldOn&&shieldT>0)shieldT--;
+    if(turboOn&&turboT>0){turboT--;if(turboT<=0)turboOn=false;}
+    if(speed<CFG.DIFF.MAX)speed+=CFG.DIFF.INC;
+}
+
+function updParticles(){
+    for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];
+        p.x+=p.vx*(deltaTime/16);
+        p.y+=p.vy*(deltaTime/16);
+        p.vy+=0.2;
+        p.life-=0.025;
+        p.size*=0.96;
+        if(p.life<=0)particles.splice(i,1);
+    }
+}
+
+// ==========================================
+// WEBGL-STYLE DRAWING (Canvas 2D with effects)
+// ==========================================
+function drawBg(){
+    // Gradient sky
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#050510');
+    g.addColorStop(0.3,'#0a0a20');
+    g.addColorStop(0.6,'#151530');
+    g.addColorStop(1,'#1a1a40');
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,W,H);
+    
+    // Stars with twinkle
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    for(let i=0;i<60;i++){
+        const x=(i*73+frame*0.02)%W;
+        const y=(i*47)%(H*0.6);
+        const twinkle=0.3+Math.sin(frame*0.05+i)*0.3;
+        ctx.globalAlpha=twinkle;
+        ctx.beginPath();
+        ctx.arc(x,y,1+Math.random(),0,Math.PI*2);
+        ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    
+    // Nebula effect
+    ctx.fillStyle='rgba(74,108,247,0.03)';
+    ctx.beginPath();
+    ctx.arc(W*0.7,H*0.3,200,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='rgba(155,89,182,0.03)';
+    ctx.beginPath();
+    ctx.arc(W*0.3,H*0.6,150,0,Math.PI*2);
+    ctx.fill();
+    
+    // Moon with glow
+    ctx.shadowColor='rgba(255,255,230,0.5)';
+    ctx.shadowBlur=40;
+    ctx.fillStyle='rgba(255,255,230,0.95)';
+    ctx.beginPath();
+    ctx.arc(W-60,80,30,0,Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur=0;
+    
+    // Ground
+    const groundG=ctx.createLinearGradient(0,H-80,0,H);
+    groundG.addColorStop(0,'#1a2a3a');
+    groundG.addColorStop(1,'#0a1520');
+    ctx.fillStyle=groundG;
+    ctx.fillRect(0,H-70,W,70);
+    
+    // Road lines with glow
+    ctx.shadowColor='rgba(255,255,255,0.3)';
+    ctx.shadowBlur=5;
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    const off=(frame*4*speed)%100;
+    for(let x=-off;x<W+100;x+=100){
+        ctx.fillRect(x,H-40,50,4);
+    }
+    ctx.shadowBlur=0;
+}
+
+function drawPlayer(){
+    ctx.save();
+    ctx.translate(player.x,player.y);
+    const bob=Math.sin(frame*0.1)*4;
+    ctx.rotate(player.rot);
+    ctx.translate(0,bob);
+    
+    // Shield effect
+    if(shieldOn){
+        ctx.strokeStyle=`rgba(0,212,255,${0.4+Math.sin(frame*0.15)*0.2})`;
+        ctx.lineWidth=4;
+        ctx.shadowColor='#00d4ff';
+        ctx.shadowBlur=20;
+        ctx.beginPath();
+        ctx.arc(0,0,55,0,Math.PI*2);
+        ctx.stroke();
+        ctx.shadowBlur=0;
+    }
+    
+    // Turbo effect
+    if(turboOn){
+        ctx.shadowColor='#00d4ff';
+        ctx.shadowBlur=40;
+    }
+    
+    // Player glow
+    ctx.shadowColor='rgba(255,200,100,0.5)';
+    ctx.shadowBlur=20;
+    
+    const icon=(PLANES.find(p=>p.id===stats.plane)||{icon:'✈️'}).icon;
+    ctx.font='55px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(icon,0,0);
+    ctx.shadowBlur=0;
+    
+    // Engine trail
+    if(state==='playing'&&frame%2===0){
+        particles.push({
+            x:player.x-45,y:player.y+bob,
+            vx:-3-Math.random()*2,vy:(Math.random()-0.5)*2,
+            size:5+Math.random()*4,
+            color:turboOn?'rgba(0,212,255,0.7)':'rgba(255,150,50,0.6)',
+            life:0.5
+        });
+    }
+    
+    ctx.restore();
+}
+
+function drawObs(){
+    obstacles.forEach(o=>{
+        // Pipe gradient
+        const g=ctx.createLinearGradient(o.x,0,o.x+CFG.OBS.W,0);
+        g.addColorStop(0,'#1a3a5c');
+        g.addColorStop(0.5,'#2a5a8c');
+        g.addColorStop(1,'#1a3a5c');
+        ctx.fillStyle=g;
+        
+        // Top pipe
+        ctx.fillRect(o.x,0,CFG.OBS.W,o.top);
+        // Bottom pipe
+        ctx.fillRect(o.x,o.bot,CFG.OBS.W,H-o.bot);
+        
+        // Pipe caps with glow
+        ctx.shadowColor='rgba(74,124,204,0.5)';
+        ctx.shadowBlur=10;
+        ctx.fillStyle='#4a7ccc';
+        ctx.fillRect(o.x-6,o.top-22,CFG.OBS.W+12,22);
+        ctx.fillRect(o.x-6,o.bot,CFG.OBS.W+12,22);
+        ctx.shadowBlur=0;
+        
+        // Warning lights
+        if(Math.floor(frame/25)%2===0){
+            ctx.fillStyle='#ff4444';
+            ctx.shadowColor='#ff4444';
+            ctx.shadowBlur=15;
+            ctx.beginPath();
+            ctx.arc(o.x+CFG.OBS.W/2,o.top-11,5,0,Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(o.x+CFG.OBS.W/2,o.bot+11,5,0,Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur=0;
+        }
+    });
+}
+
+function drawParts(){
+    items.forEach(p=>{
+        if(p.col)return;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        const pulse=1+Math.sin(frame*0.12)*0.12;
+        ctx.scale(pulse,pulse);
+        
+        // Glow based on rarity
+        const glows={common:'rgba(150,150,150,0.4)',uncommon:'rgba(46,204,113,0.6)',rare:'rgba(74,108,247,0.7)',epic:'rgba(155,89,182,0.8)',legendary:'rgba(240,185,11,1)'};
+        const bgs={common:'#4a4a4a',uncommon:'#27ae60',rare:'#3498db',epic:'#9b59b6',legendary:'#f39c12'};
+        
+        ctx.shadowColor=glows[p.rarity];
+        ctx.shadowBlur=p.rarity==='legendary'?35:20;
+        
+        ctx.fillStyle=bgs[p.rarity];
+        ctx.beginPath();
+        ctx.arc(0,0,22,0,Math.PI*2);
+        ctx.fill();
+        
+        ctx.shadowBlur=0;
+        ctx.font='20px Arial';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(p.icon,0,0);
+        ctx.restore();
+        
+        // Value label for non-common
+        if(p.rarity!=='common'){
+            ctx.font='bold 9px Inter';
+            ctx.textAlign='center';
+            ctx.fillStyle=rColor(p.rarity);
+            ctx.fillText('$'+fmt(p.value),p.x,p.y+32);
+        }
+    });
+}
+
+function drawParticles(){
+    particles.forEach(p=>{
+        ctx.globalAlpha=p.life;
+        ctx.fillStyle=p.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+        ctx.fill();
+    });
+    ctx.globalAlpha=1;
+}
+
+// ==========================================
+// HUD & UI
+// ==========================================
+function updHud(){
+    $('hudMoney').textContent=money.toLocaleString();
+    $('hudParts').textContent='📦 '+parts;
+    $('hudScore').textContent='🎯 '+score.toLocaleString();
+    $('hudLevel').textContent=stats.level;
+    $('hudXpFill').style.width=getXpProgress()+'%';
+    $('pwShield').classList.toggle('active',shieldOn);
+    $('pwTurbo').classList.toggle('active',turboOn);
+    
+    if(currentMission){
+        $('hudMissionText').textContent=currentMission.name;
+        const prog=Math.min(stats.missionProgress[currentMission.id]||0,currentMission.goal);
+        $('hudMissionFill').style.width=(prog/currentMission.goal*100)+'%';
+    }
+}
+
+function updMenu(){
+    $('menuMoney').textContent=stats.money.toLocaleString();
+    $('menuLevel').textContent=stats.level;
+    $('menuXpFill').style.width=getXpProgress()+'%';
+    $('menuGames').textContent=stats.games;
+    $('menuParts').textContent=stats.parts;
+    $('menuBosses').textContent=stats.bosses;
+    $('menuWins').textContent=stats.pvpWins;
+    $('pvpWins').textContent=stats.pvpWins;
+    $('pvpLosses').textContent=stats.pvpLosses;
+    $('pvpRank').textContent=stats.pvpWins>10?'Gold':stats.pvpWins>5?'Silver':'Bronze';
+    renderMissions();
+}
+
+function renderShop(){
+    $('planesList').innerHTML=PLANES.map(p=>{
+        const own=stats.planes.includes(p.id),sel=stats.plane===p.id;
+        return`<div class="plane-item ${own?'owned':''} ${sel?'selected':''}" data-plane="${p.id}">
+            <div class="plane-icon">${p.icon}</div>
+            <div class="plane-info"><div class="plane-name">${p.name}</div><div class="plane-stats">${p.desc}</div></div>
+            <div class="plane-price ${own?'owned':''}">${own?(sel?'✓':'Выбрать'):'$'+p.price.toLocaleString()}</div>
+        </div>`;
+    }).join('');
+    
+    $('upgradesList').innerHTML=UPGRADES.map(u=>{
+        const own=has(u.id);
+        return`<div class="shop-item ${own?'owned':''}" data-upg="${u.id}">
+            <div class="shop-item-icon">${u.icon}</div>
+            <div class="shop-item-name">${u.name}</div>
+            <div class="shop-item-desc">${u.desc}</div>
+            <div class="shop-item-price ${own?'owned':''}">${own?'✓':'$'+u.price.toLocaleString()}</div>
+        </div>`;
+    }).join('');
+    
+    // Event listeners
+    document.querySelectorAll('[data-plane]').forEach(el=>{
+        el.onclick=()=>{
+            const id=el.dataset.plane,pl=PLANES.find(p=>p.id===id);
+            if(stats.planes.includes(id)){stats.plane=id;save();renderShop();}
+            else if(stats.money>=pl.price){stats.money-=pl.price;stats.planes.push(id);stats.plane=id;save();renderShop();updMenu();vibrate('success');}
+        };
+    });
+    document.querySelectorAll('[data-upg]').forEach(el=>{
+        el.onclick=()=>{
+            const id=el.dataset.upg,u=UPGRADES.find(x=>x.id===id);
+            if(!has(id)&&stats.money>=u.price){stats.money-=u.price;stats.upgrades.push(id);save();renderShop();updMenu();vibrate('success');}
+        };
+    });
+}
+
+// ==========================================
+// LEADERBOARD
+// ==========================================
+async function fetchLeaderboard(sortBy='best_score'){
+    try{
+        const res=await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=${sortBy}.desc&limit=50`,{
+            headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'}
+        });
+        if(res.ok)return await res.json();
+    }catch(e){}
+    return[];
+}
+
+async function submitScore(score,money){
+    if(!tgUser.id)return;
+    try{
+        const check=await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}&select=*`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
+        const existing=await check.json();
+        const data={first_name:tgUser.first_name,last_name:tgUser.last_name,username:tgUser.username,best_score:score,total_money:stats.money,total_parts:stats.parts,total_games:stats.games,rfq_completed:stats.bosses,current_plane:stats.plane};
+        if(existing?.length>0){
+            data.best_score=Math.max(existing[0].best_score,score);
+            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard?telegram_id=eq.${tgUser.id}`,{method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(data)});
+        }else{
+            data.telegram_id=tgUser.id;
+            await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(data)});
+        }
+    }catch(e){}
+}
+
+let currentLbSort='best_score';
+async function renderLeaderboard(sortBy=currentLbSort){
+    currentLbSort=sortBy;
+    const list=$('lbList');
+    list.innerHTML='<div class="lb-loading">⏳ Загрузка...</div>';
+    document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===(sortBy==='best_score'?'score':'money')));
+    const data=await fetchLeaderboard(sortBy);
+    if(!data?.length){list.innerHTML='<div class="lb-empty">🏆 Будь первым!</div>';return;}
+    list.innerHTML=data.map((p,i)=>{
+        const name=[p.first_name,p.last_name].filter(Boolean).join(' ')||'Пилот';
+        const isMe=tgUser.id&&p.telegram_id===tgUser.id;
+        const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        const planeIcon=(PLANES.find(pl=>pl.id===p.current_plane)||PLANES[0]).icon;
+        const val=sortBy==='best_score'?p.best_score.toLocaleString():'$'+fmt(p.total_money);
+        return`<div class="lb-item ${isMe?'me':''}"><div class="lb-rank ${rankClass}">${i+1}</div><div class="lb-avatar">${planeIcon}</div><div class="lb-info"><div class="lb-name">${name}${isMe?' (вы)':''}</div><div class="lb-stats">🎮 ${p.total_games} • 👹 ${p.rfq_completed||0}</div></div><div class="lb-score">${val}</div></div>`;
+    }).join('');
+}
+
+// ==========================================
+// UTILITIES
+// ==========================================
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));if(id)$(id).classList.add('active');}
-function alert2(icon,text,color='gold'){const el=$('alertPopup');$('alertIcon').textContent=icon;$('alertText').textContent=text;el.style.borderColor=color==='gold'?'#f0b90b':color==='green'?'#2ecc71':'#9b59b6';$('alertText').style.color=el.style.borderColor;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
+function alert2(icon,text,color='gold'){const el=$('alertPopup');$('alertIcon').textContent=icon;$('alertText').textContent=text;const colors={gold:'#f0b90b',green:'#2ecc71',cyan:'#00d4ff',purple:'#9b59b6',red:'#e74c3c'};el.style.borderColor=colors[color]||colors.gold;$('alertText').style.color=el.style.borderColor;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
 function popup(p){const el=document.createElement('div');el.className='part-popup';el.style.left=p.x+'px';el.style.top=(p.y-30)+'px';el.style.color=rColor(p.rarity);el.textContent='+$'+p.value.toLocaleString();document.querySelector('.game-container').appendChild(el);setTimeout(()=>el.remove(),1000);}
 function rColor(r){return{common:'#9ca3af',uncommon:'#2ecc71',rare:'#4a6cf7',epic:'#9b59b6',legendary:'#f0b90b'}[r]||'#fff';}
 function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toString();}
-function save(){localStorage.setItem('apr5',JSON.stringify(stats));}
+function save(){localStorage.setItem('apr6',JSON.stringify(stats));}
 const $=id=>document.getElementById(id);
-canvas.addEventListener('click',jump);canvas.addEventListener('touchstart',e=>{e.preventDefault();jump();});document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jump();}if(e.code==='KeyT')turbo();});let lastTap=0;canvas.addEventListener('touchend',()=>{const now=Date.now();if(now-lastTap<300)turbo();lastTap=now;});
-$('btnPlay').onclick=showRfq;$('btnAog').onclick=startAog;$('btnShop').onclick=()=>{renderShop();show('shopScreen');};$('btnCollection').onclick=()=>{renderColl();show('collectionScreen');};$('btnAchievements').onclick=()=>{renderAchievements();show('achievementsScreen');};$('btnLeaderboard').onclick=()=>{renderLeaderboard();show('lbScreen');};$('btnInvite').onclick=shareInvite;$('btnDonate').onclick=()=>show('donateScreen');$('shopBack').onclick=()=>{show('mainMenu');updMenu();};$('collectionBack').onclick=()=>{show('mainMenu');updMenu();};$('achievementsBack').onclick=()=>{show('mainMenu');updMenu();};$('lbBack').onclick=()=>{show('mainMenu');updMenu();};$('donateBack').onclick=()=>{show('mainMenu');updMenu();};$('btnStartRfq').onclick=start;$('btnSkipRfq').onclick=()=>{rfq=null;start();};$('btnRetry').onclick=showRfq;$('btnShare').onclick=()=>shareScore(parseInt($('goMoney').textContent.replace(/,/g,'')));$('btnHome').onclick=()=>{show('mainMenu');updMenu();};$('tutorialNext').onclick=nextTutorial;
-document.addEventListener('click',e=>{if(e.target.classList.contains('lb-tab'))renderLeaderboard(e.target.dataset.tab==='score'?'best_score':'total_money');if(e.target.closest('.donate-btn'))processDonation(parseInt(e.target.closest('.donate-btn').dataset.stars));});
-function loop(timestamp){deltaTime=lastTime?Math.min(timestamp-lastTime,32):16;lastTime=timestamp;if(canvas.width<100)resize();drawBg();if(state==='playing'||state==='over'){drawWeather();drawObs();drawParts();drawPlayer();}drawParticles();if(state==='playing'){updPlayer();updObs();updParts();updTimers();updHud();}updParticles();frame++;requestAnimationFrame(loop);}
-checkStreak();updMenu();checkAchievements();if(!stats.tutorialDone)showTutorial();loop(0);
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ==========================================
+// GAME LOOP
+// ==========================================
+function loop(ts){
+    deltaTime=lastTime?Math.min(ts-lastTime,32):16;
+    lastTime=ts;
+    
+    drawBg();
+    
+    if(state==='playing'||state==='over'){
+        drawObs();
+        drawParts();
+        if(bossActive)drawBoss();
+        drawProjectiles();
+        drawPlayer();
+    }
+    drawParticles();
+    
+    if(state==='playing'){
+        updPlayer();
+        updObs();
+        updParts();
+        updTimers();
+        updParticles();
+        if(bossActive){
+            updateBoss();
+            updateProjectiles();
+        }
+        updHud();
+    }
+    
+    frame++;
+    requestAnimationFrame(loop);
+}
+
+// ==========================================
+// EVENTS
+// ==========================================
+canvas.addEventListener('click',jump);
+canvas.addEventListener('touchstart',e=>{e.preventDefault();jump();});
+document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jump();}if(e.code==='KeyT')turbo();});
+let lastTap=0;canvas.addEventListener('touchend',()=>{const now=Date.now();if(now-lastTap<300)turbo();lastTap=now;});
+
+$('btnPlay').onclick=()=>start('normal');
+$('btnBoss').onclick=()=>show('bossScreen');
+$('btnPvp').onclick=()=>{findOpponent();show('pvpScreen');};
+$('btnBattlePass').onclick=()=>{renderBattlePass();show('bpScreen');};
+$('btnShop').onclick=()=>{renderShop();show('shopScreen');};
+$('btnLeaderboard').onclick=()=>{renderLeaderboard();show('lbScreen');};
+
+$('bpBack').onclick=()=>{show('mainMenu');updMenu();};
+$('pvpBack').onclick=()=>{show('mainMenu');updMenu();};
+$('bossBack').onclick=()=>{show('mainMenu');updMenu();};
+$('shopBack').onclick=()=>{show('mainMenu');updMenu();};
+$('lbBack').onclick=()=>{show('mainMenu');updMenu();};
+
+$('btnStartBoss').onclick=()=>start('boss');
+$('btnStartPvp').onclick=()=>start('pvp');
+$('btnFindOpponent').onclick=findOpponent;
+
+$('btnRetry').onclick=()=>start(gameMode);
+$('btnShare').onclick=()=>{
+    const text=`✈️ Aviation Parts Runner v4.0\n🏆 Мой результат: $${$('goMoney').textContent}\n👹 Боссов: ${stats.bosses}\n⚔️ PvP побед: ${stats.pvpWins}`;
+    if(tg)tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/AviationPartsBot&text=${encodeURIComponent(text)}`);
+};
+$('btnHome').onclick=()=>{show('mainMenu');updMenu();};
+
+$('musicToggle').onclick=toggleMusic;
+
+document.addEventListener('click',e=>{
+    if(e.target.classList.contains('lb-tab'))renderLeaderboard(e.target.dataset.tab==='score'?'best_score':'total_money');
+});
+
+// ==========================================
+// INIT
+// ==========================================
+resetDailyMissions();
+updMenu();
+loop(0);
 </script>
 </body>
 </html>
