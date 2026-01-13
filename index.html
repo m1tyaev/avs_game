@@ -943,7 +943,8 @@ function drawPlane(type,x,y,rot,scale=1){
     const t=frame*0.1;
     
     if(type==='cessna'){
-        // Cessna 172 - SIDE PROFILE VIEW (OD2811 livery)
+        // Cessna 172 - SIDE PROFILE VIEW (OD2811 livery) - COMPACT
+        ctx.scale(0.6,0.6); // Уменьшаем размер
         const t=frame*0.1;
         
         // === WING (behind fuselage) ===
@@ -1016,7 +1017,6 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.stroke();
         
         // === COCKPIT WINDOWS ===
-        // Main windshield
         ctx.fillStyle='#3a6a9e';
         ctx.beginPath();
         ctx.moveTo(32,-7);
@@ -1026,11 +1026,9 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.lineTo(28,-6);
         ctx.closePath();
         ctx.fill();
-        // Window frame
         ctx.strokeStyle='#ffffff';
         ctx.lineWidth=1;
         ctx.stroke();
-        // Reflection
         ctx.fillStyle='rgba(255,255,255,0.3)';
         ctx.beginPath();
         ctx.moveTo(35,-6);
@@ -1048,17 +1046,8 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.beginPath();
         ctx.roundRect(5,-7,10,6,1);
         ctx.fill();
-        ctx.strokeStyle='#ffffff';
-        ctx.lineWidth=0.5;
-        ctx.beginPath();
-        ctx.roundRect(18,-7,8,6,1);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.roundRect(5,-7,10,6,1);
-        ctx.stroke();
         
         // === TAIL SECTION - RED ===
-        // Vertical stabilizer
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
         ctx.moveTo(-35,-8);
@@ -1068,7 +1057,6 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.lineTo(-35,-5);
         ctx.closePath();
         ctx.fill();
-        // White stripe on tail
         ctx.fillStyle='#ffffff';
         ctx.beginPath();
         ctx.moveTo(-40,-25);
@@ -1077,13 +1065,6 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.lineTo(-45,-10);
         ctx.closePath();
         ctx.fill();
-        // Blue accent
-        ctx.strokeStyle='#1e4d8c';
-        ctx.lineWidth=1;
-        ctx.beginPath();
-        ctx.moveTo(-41,-24);
-        ctx.lineTo(-46,-10);
-        ctx.stroke();
         
         // Horizontal stabilizer
         ctx.fillStyle='#cc2936';
@@ -1095,23 +1076,11 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.closePath();
         ctx.fill();
         
-        // Rudder detail
-        ctx.strokeStyle='#a02030';
-        ctx.lineWidth=0.5;
-        ctx.beginPath();
-        ctx.moveTo(-45,-25);
-        ctx.lineTo(-47,-8);
-        ctx.stroke();
-        
         // === ENGINE COWLING ===
         ctx.fillStyle='#e8e8e8';
         ctx.beginPath();
         ctx.ellipse(44,0,6,8,0,0,Math.PI*2);
         ctx.fill();
-        ctx.strokeStyle='#c0c0c0';
-        ctx.lineWidth=1;
-        ctx.stroke();
-        // Red nose tip
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
         ctx.arc(48,0,4,0,Math.PI*2);
@@ -1120,18 +1089,15 @@ function drawPlane(type,x,y,rot,scale=1){
         // === PROPELLER (animated) ===
         ctx.save();
         ctx.translate(52,0);
-        // Propeller blur disk
         ctx.fillStyle=`rgba(80,80,80,${0.1+Math.abs(Math.sin(frame*0.5))*0.1})`;
         ctx.beginPath();
         ctx.ellipse(0,0,4,18,0,0,Math.PI*2);
         ctx.fill();
-        // Spinning blades
         const propAngle=frame*0.9;
         ctx.fillStyle='#2a2a2a';
         ctx.beginPath();
         ctx.ellipse(0,Math.sin(propAngle)*15,2,3+Math.abs(Math.cos(propAngle))*12,0,0,Math.PI*2);
         ctx.fill();
-        // Spinner cone
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
         ctx.arc(2,0,3,0,Math.PI*2);
@@ -1139,32 +1105,21 @@ function drawPlane(type,x,y,rot,scale=1){
         ctx.restore();
         
         // === LANDING GEAR ===
-        // Main gear strut
         ctx.strokeStyle='#505050';
         ctx.lineWidth=2.5;
         ctx.beginPath();
         ctx.moveTo(5,10);
         ctx.lineTo(5,20);
         ctx.stroke();
-        // Wheel fairing
         ctx.fillStyle='#d0d0d0';
         ctx.beginPath();
         ctx.ellipse(5,20,8,5,0,0,Math.PI*2);
         ctx.fill();
-        ctx.strokeStyle='#a0a0a0';
-        ctx.lineWidth=1;
-        ctx.stroke();
-        // Wheel
         ctx.fillStyle='#333';
         ctx.beginPath();
         ctx.arc(5,21,4,0,Math.PI*2);
         ctx.fill();
-        ctx.fillStyle='#666';
-        ctx.beginPath();
-        ctx.arc(5,21,2,0,Math.PI*2);
-        ctx.fill();
         
-        // Nose gear
         ctx.strokeStyle='#505050';
         ctx.lineWidth=2;
         ctx.beginPath();
@@ -1185,14 +1140,12 @@ function drawPlane(type,x,y,rot,scale=1){
         
         // === NAVIGATION LIGHTS ===
         if(Math.floor(frame/15)%2===0){
-            // Red beacon on tail
             ctx.fillStyle='#ff0000';
             ctx.shadowColor='#ff0000';
             ctx.shadowBlur=10;
             ctx.beginPath();
             ctx.arc(-45,-26,2,0,Math.PI*2);
             ctx.fill();
-            // White strobe
             ctx.fillStyle='#ffffff';
             ctx.shadowColor='#ffffff';
             ctx.shadowBlur=8;
@@ -1200,16 +1153,6 @@ function drawPlane(type,x,y,rot,scale=1){
             ctx.arc(-50,0,2,0,Math.PI*2);
             ctx.fill();
             ctx.shadowBlur=0;
-        }
-        
-        // === ENGINE EXHAUST ===
-        if(state==='playing'){
-            ctx.fillStyle=`rgba(180,180,180,${0.15+Math.sin(frame*0.4)*0.1})`;
-            for(let i=0;i<3;i++){
-                ctx.beginPath();
-                ctx.arc(-52-i*6,0+Math.sin(frame*0.3+i)*2,3-i*0.5,0,Math.PI*2);
-                ctx.fill();
-            }
         }
     }
     else if(type==='boeing'){
