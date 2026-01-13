@@ -943,276 +943,273 @@ function drawPlane(type,x,y,rot,scale=1){
     const t=frame*0.1;
     
     if(type==='cessna'){
-        // Cessna 172 - Based on OD2811 model (red/white/blue livery)
+        // Cessna 172 - SIDE PROFILE VIEW (OD2811 livery)
         const t=frame*0.1;
         
-        // Shadow under plane
-        ctx.fillStyle='rgba(0,0,0,0.2)';
+        // === WING (behind fuselage) ===
+        ctx.fillStyle='#d8d8d8';
         ctx.beginPath();
-        ctx.ellipse(5,8,30,8,0,0,Math.PI*2);
+        ctx.moveTo(10,-18);
+        ctx.lineTo(25,-20);
+        ctx.lineTo(25,-16);
+        ctx.lineTo(-20,-14);
+        ctx.lineTo(-20,-18);
+        ctx.closePath();
         ctx.fill();
+        // Wing strut
+        ctx.strokeStyle='#a0a0a0';
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(5,-14);
+        ctx.lineTo(0,-4);
+        ctx.stroke();
         
-        // Main fuselage - white/light gray
-        const fuselageGrad=ctx.createLinearGradient(0,-15,0,15);
+        // === FUSELAGE ===
+        const fuselageGrad=ctx.createLinearGradient(0,-12,0,12);
         fuselageGrad.addColorStop(0,'#ffffff');
-        fuselageGrad.addColorStop(0.3,'#f5f5f5');
-        fuselageGrad.addColorStop(0.7,'#e8e8e8');
-        fuselageGrad.addColorStop(1,'#d0d0d0');
+        fuselageGrad.addColorStop(0.4,'#f8f8f8');
+        fuselageGrad.addColorStop(0.6,'#f0f0f0');
+        fuselageGrad.addColorStop(1,'#e0e0e0');
         ctx.fillStyle=fuselageGrad;
         ctx.beginPath();
-        ctx.moveTo(40,0);
-        ctx.quadraticCurveTo(45,-8,35,-10);
-        ctx.lineTo(-30,-8);
-        ctx.quadraticCurveTo(-38,-6,-40,0);
-        ctx.quadraticCurveTo(-38,6,-30,8);
+        ctx.moveTo(45,0);
+        // Nose
+        ctx.quadraticCurveTo(50,-3,48,-5);
+        ctx.lineTo(35,-8);
+        // Top of fuselage
+        ctx.lineTo(-25,-8);
+        // Tail cone
+        ctx.lineTo(-45,-5);
+        ctx.lineTo(-48,0);
+        ctx.lineTo(-45,5);
+        // Bottom of fuselage
+        ctx.lineTo(-25,10);
         ctx.lineTo(35,10);
-        ctx.quadraticCurveTo(45,8,40,0);
+        // Back to nose
+        ctx.quadraticCurveTo(50,3,45,0);
+        ctx.closePath();
         ctx.fill();
         ctx.strokeStyle='#c0c0c0';
         ctx.lineWidth=0.5;
         ctx.stroke();
         
-        // Red nose cone
+        // === RED STRIPE ===
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
-        ctx.moveTo(40,0);
-        ctx.quadraticCurveTo(50,-4,48,0);
-        ctx.quadraticCurveTo(50,4,40,0);
-        ctx.fill();
-        
-        // Engine cowling - white with red accent
-        ctx.fillStyle='#f0f0f0';
-        ctx.beginPath();
-        ctx.ellipse(38,0,8,7,0,0,Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle='#cc2936';
-        ctx.beginPath();
-        ctx.arc(38,-5,3,0,Math.PI*2);
-        ctx.fill();
-        
-        // Cockpit windows - blue tinted
-        ctx.fillStyle='#4a7db8';
-        ctx.beginPath();
-        ctx.moveTo(25,-7);
-        ctx.quadraticCurveTo(32,-8,32,0);
-        ctx.quadraticCurveTo(32,8,25,7);
-        ctx.lineTo(15,6);
-        ctx.lineTo(15,-6);
+        ctx.moveTo(40,-2);
+        ctx.lineTo(-45,-2);
+        ctx.lineTo(-45,2);
+        ctx.lineTo(40,2);
         ctx.closePath();
         ctx.fill();
-        // Window reflection
-        ctx.fillStyle='rgba(255,255,255,0.4)';
+        
+        // === BLUE ACCENT LINE ===
+        ctx.strokeStyle='#1e4d8c';
+        ctx.lineWidth=1.5;
         ctx.beginPath();
-        ctx.moveTo(28,-5);
-        ctx.quadraticCurveTo(30,-4,29,0);
-        ctx.lineTo(26,0);
-        ctx.lineTo(26,-4);
+        ctx.moveTo(40,-4);
+        ctx.lineTo(-45,-4);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(40,4);
+        ctx.lineTo(-45,4);
+        ctx.stroke();
+        
+        // === COCKPIT WINDOWS ===
+        // Main windshield
+        ctx.fillStyle='#3a6a9e';
+        ctx.beginPath();
+        ctx.moveTo(32,-7);
+        ctx.quadraticCurveTo(38,-8,40,-5);
+        ctx.lineTo(40,0);
+        ctx.lineTo(28,0);
+        ctx.lineTo(28,-6);
+        ctx.closePath();
+        ctx.fill();
+        // Window frame
+        ctx.strokeStyle='#ffffff';
+        ctx.lineWidth=1;
+        ctx.stroke();
+        // Reflection
+        ctx.fillStyle='rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(35,-6);
+        ctx.lineTo(38,-5);
+        ctx.lineTo(38,-2);
+        ctx.lineTo(34,-3);
         ctx.closePath();
         ctx.fill();
         
         // Side windows
-        ctx.fillStyle='#4a7db8';
+        ctx.fillStyle='#3a6a9e';
         ctx.beginPath();
-        ctx.roundRect(5,-7,8,5,2);
+        ctx.roundRect(18,-7,8,6,1);
         ctx.fill();
         ctx.beginPath();
-        ctx.roundRect(-8,-7,10,5,2);
+        ctx.roundRect(5,-7,10,6,1);
         ctx.fill();
+        ctx.strokeStyle='#ffffff';
+        ctx.lineWidth=0.5;
+        ctx.beginPath();
+        ctx.roundRect(18,-7,8,6,1);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.roundRect(5,-7,10,6,1);
+        ctx.stroke();
         
-        // Red and blue stripes on fuselage
-        ctx.fillStyle='#cc2936';
-        ctx.fillRect(-25,-9,60,2);
-        ctx.fillStyle='#1e4d8c';
-        ctx.fillRect(-25,-7,60,1);
-        ctx.fillStyle='#cc2936';
-        ctx.fillRect(-25,7,60,2);
-        ctx.fillStyle='#1e4d8c';
-        ctx.fillRect(-25,6,60,1);
-        
-        // Wings - high wing design
-        const wingGrad=ctx.createLinearGradient(0,-50,0,50);
-        wingGrad.addColorStop(0,'#e8e8e8');
-        wingGrad.addColorStop(0.5,'#ffffff');
-        wingGrad.addColorStop(1,'#e8e8e8');
-        ctx.fillStyle=wingGrad;
-        // Wing struts
-        ctx.fillStyle='#d0d0d0';
-        ctx.fillRect(5,-12,3,24);
-        ctx.fillRect(-10,-12,3,24);
-        // Main wing
-        ctx.fillStyle=wingGrad;
-        ctx.beginPath();
-        ctx.moveTo(15,-10);
-        ctx.lineTo(18,-52);
-        ctx.lineTo(8,-54);
-        ctx.lineTo(-15,-54);
-        ctx.lineTo(-18,-10);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(15,10);
-        ctx.lineTo(18,52);
-        ctx.lineTo(8,54);
-        ctx.lineTo(-15,54);
-        ctx.lineTo(-18,10);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Wing tips - red
-        ctx.fillStyle='#cc2936';
-        ctx.beginPath();
-        ctx.moveTo(8,-54);
-        ctx.lineTo(12,-56);
-        ctx.lineTo(-12,-56);
-        ctx.lineTo(-15,-54);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(8,54);
-        ctx.lineTo(12,56);
-        ctx.lineTo(-12,56);
-        ctx.lineTo(-15,54);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Wing stripes
-        ctx.fillStyle='#cc2936';
-        ctx.fillRect(-14,-53,28,3);
-        ctx.fillRect(-14,50,28,3);
-        ctx.fillStyle='#1e4d8c';
-        ctx.fillRect(-14,-50,28,2);
-        ctx.fillRect(-14,48,28,2);
-        
-        // Tail section - RED (signature of this model)
-        ctx.fillStyle='#cc2936';
+        // === TAIL SECTION - RED ===
         // Vertical stabilizer
+        ctx.fillStyle='#cc2936';
         ctx.beginPath();
-        ctx.moveTo(-32,0);
-        ctx.lineTo(-38,-25);
-        ctx.lineTo(-30,-25);
-        ctx.lineTo(-28,-5);
-        ctx.lineTo(-28,5);
-        ctx.lineTo(-30,25);
-        ctx.lineTo(-38,25);
-        ctx.lineTo(-32,0);
+        ctx.moveTo(-35,-8);
+        ctx.lineTo(-42,-28);
+        ctx.lineTo(-48,-28);
+        ctx.lineTo(-48,-5);
+        ctx.lineTo(-35,-5);
         ctx.closePath();
         ctx.fill();
         // White stripe on tail
         ctx.fillStyle='#ffffff';
-        ctx.fillRect(-36,-20,5,2);
-        ctx.fillRect(-36,18,5,2);
-        ctx.fillStyle='#1e4d8c';
-        ctx.fillRect(-36,-18,5,1);
-        ctx.fillRect(-36,17,5,1);
+        ctx.beginPath();
+        ctx.moveTo(-40,-25);
+        ctx.lineTo(-42,-25);
+        ctx.lineTo(-47,-10);
+        ctx.lineTo(-45,-10);
+        ctx.closePath();
+        ctx.fill();
+        // Blue accent
+        ctx.strokeStyle='#1e4d8c';
+        ctx.lineWidth=1;
+        ctx.beginPath();
+        ctx.moveTo(-41,-24);
+        ctx.lineTo(-46,-10);
+        ctx.stroke();
         
-        // Horizontal stabilizer - red
+        // Horizontal stabilizer
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
-        ctx.moveTo(-30,-4);
-        ctx.lineTo(-42,-18);
-        ctx.lineTo(-35,-18);
-        ctx.lineTo(-28,-4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-30,4);
-        ctx.lineTo(-42,18);
-        ctx.lineTo(-35,18);
-        ctx.lineTo(-28,4);
+        ctx.moveTo(-40,-5);
+        ctx.lineTo(-55,-8);
+        ctx.lineTo(-55,-5);
+        ctx.lineTo(-45,-3);
         ctx.closePath();
         ctx.fill();
         
-        // Registration number OD2811
-        ctx.fillStyle='#1e4d8c';
-        ctx.font='bold 6px Arial';
-        ctx.textAlign='center';
-        ctx.fillText('OD2811',-5,0);
+        // Rudder detail
+        ctx.strokeStyle='#a02030';
+        ctx.lineWidth=0.5;
+        ctx.beginPath();
+        ctx.moveTo(-45,-25);
+        ctx.lineTo(-47,-8);
+        ctx.stroke();
         
-        // Landing gear
-        ctx.fillStyle='#404040';
-        // Nose gear
-        ctx.fillRect(30,8,2,10);
-        ctx.fillStyle='#333';
+        // === ENGINE COWLING ===
+        ctx.fillStyle='#e8e8e8';
         ctx.beginPath();
-        ctx.arc(31,18,4,0,Math.PI*2);
+        ctx.ellipse(44,0,6,8,0,0,Math.PI*2);
         ctx.fill();
-        // Main gear
-        ctx.fillStyle='#404040';
-        ctx.fillRect(-5,10,2,8);
-        ctx.fillRect(-5,-18,2,8);
-        ctx.fillStyle='#333';
+        ctx.strokeStyle='#c0c0c0';
+        ctx.lineWidth=1;
+        ctx.stroke();
+        // Red nose tip
+        ctx.fillStyle='#cc2936';
         ctx.beginPath();
-        ctx.arc(-4,18,4,0,Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(-4,-18,4,0,Math.PI*2);
-        ctx.fill();
-        // Wheel details
-        ctx.fillStyle='#666';
-        ctx.beginPath();
-        ctx.arc(-4,18,2,0,Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(-4,-18,2,0,Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(31,18,2,0,Math.PI*2);
+        ctx.arc(48,0,4,0,Math.PI*2);
         ctx.fill();
         
-        // Propeller (animated with blur effect)
+        // === PROPELLER (animated) ===
         ctx.save();
-        ctx.translate(46,0);
-        // Propeller disk (blur effect when spinning)
-        ctx.fillStyle=`rgba(100,100,100,${0.15+Math.sin(frame*0.2)*0.05})`;
+        ctx.translate(52,0);
+        // Propeller blur disk
+        ctx.fillStyle=`rgba(80,80,80,${0.1+Math.abs(Math.sin(frame*0.5))*0.1})`;
         ctx.beginPath();
-        ctx.arc(0,0,20,0,Math.PI*2);
+        ctx.ellipse(0,0,4,18,0,0,Math.PI*2);
         ctx.fill();
-        // Propeller blades
-        ctx.rotate(frame*0.8);
+        // Spinning blades
+        const propAngle=frame*0.9;
         ctx.fillStyle='#2a2a2a';
         ctx.beginPath();
-        ctx.ellipse(0,-12,3,12,0,0,Math.PI*2);
+        ctx.ellipse(0,Math.sin(propAngle)*15,2,3+Math.abs(Math.cos(propAngle))*12,0,0,Math.PI*2);
         ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(0,12,3,12,0,0,Math.PI*2);
-        ctx.fill();
-        // Spinner
+        // Spinner cone
         ctx.fillStyle='#cc2936';
         ctx.beginPath();
-        ctx.arc(0,0,4,0,Math.PI*2);
+        ctx.arc(2,0,3,0,Math.PI*2);
         ctx.fill();
         ctx.restore();
         
-        // Engine exhaust effect
-        if(state==='playing'){
-            ctx.fillStyle=`rgba(200,200,200,${0.2+Math.sin(frame*0.3)*0.1})`;
-            ctx.beginPath();
-            ctx.ellipse(-45,0,8+Math.sin(frame*0.2)*2,4,0,0,Math.PI*2);
-            ctx.fill();
-        }
+        // === LANDING GEAR ===
+        // Main gear strut
+        ctx.strokeStyle='#505050';
+        ctx.lineWidth=2.5;
+        ctx.beginPath();
+        ctx.moveTo(5,10);
+        ctx.lineTo(5,20);
+        ctx.stroke();
+        // Wheel fairing
+        ctx.fillStyle='#d0d0d0';
+        ctx.beginPath();
+        ctx.ellipse(5,20,8,5,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle='#a0a0a0';
+        ctx.lineWidth=1;
+        ctx.stroke();
+        // Wheel
+        ctx.fillStyle='#333';
+        ctx.beginPath();
+        ctx.arc(5,21,4,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle='#666';
+        ctx.beginPath();
+        ctx.arc(5,21,2,0,Math.PI*2);
+        ctx.fill();
         
-        // Navigation lights
-        if(Math.floor(frame/20)%2===0){
-            // Red on left wing
+        // Nose gear
+        ctx.strokeStyle='#505050';
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(38,8);
+        ctx.lineTo(40,16);
+        ctx.stroke();
+        ctx.fillStyle='#333';
+        ctx.beginPath();
+        ctx.arc(40,17,3,0,Math.PI*2);
+        ctx.fill();
+        
+        // === REGISTRATION NUMBER ===
+        ctx.fillStyle='#1e4d8c';
+        ctx.font='bold 7px Arial';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText('OD-2811',-12,6);
+        
+        // === NAVIGATION LIGHTS ===
+        if(Math.floor(frame/15)%2===0){
+            // Red beacon on tail
             ctx.fillStyle='#ff0000';
             ctx.shadowColor='#ff0000';
-            ctx.shadowBlur=8;
+            ctx.shadowBlur=10;
             ctx.beginPath();
-            ctx.arc(-12,-55,2,0,Math.PI*2);
+            ctx.arc(-45,-26,2,0,Math.PI*2);
             ctx.fill();
-            // Green on right wing
-            ctx.fillStyle='#00ff00';
-            ctx.shadowColor='#00ff00';
-            ctx.beginPath();
-            ctx.arc(-12,55,2,0,Math.PI*2);
-            ctx.fill();
-            // White on tail
+            // White strobe
             ctx.fillStyle='#ffffff';
             ctx.shadowColor='#ffffff';
+            ctx.shadowBlur=8;
             ctx.beginPath();
-            ctx.arc(-40,0,2,0,Math.PI*2);
+            ctx.arc(-50,0,2,0,Math.PI*2);
             ctx.fill();
             ctx.shadowBlur=0;
+        }
+        
+        // === ENGINE EXHAUST ===
+        if(state==='playing'){
+            ctx.fillStyle=`rgba(180,180,180,${0.15+Math.sin(frame*0.4)*0.1})`;
+            for(let i=0;i<3;i++){
+                ctx.beginPath();
+                ctx.arc(-52-i*6,0+Math.sin(frame*0.3+i)*2,3-i*0.5,0,Math.PI*2);
+                ctx.fill();
+            }
         }
     }
     else if(type==='boeing'){
