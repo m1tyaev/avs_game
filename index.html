@@ -496,9 +496,24 @@ if(tg){tg.ready();tg.expand();if(tg.safeAreaInset)safeTop=Math.max(100,tg.safeAr
 function vibrate(t='light'){if(tg?.HapticFeedback)tg.HapticFeedback.impactOccurred(t);}
 
 // Audio
-let audioCtx=null,masterGain=null;
+let audioCtx=null,masterGain=null,lastSoundTime=0;
 function initAudio(){if(audioCtx)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0.2;masterGain.connect(audioCtx.destination);}catch(e){}}
-function playSound(type,freq=440){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(masterGain);const now=audioCtx.currentTime;if(type==='jump'){o.frequency.setValueAtTime(400,now);o.frequency.exponentialRampToValueAtTime(700,now+0.1);g.gain.setValueAtTime(0.1,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);o.start(now);o.stop(now+0.1);}else if(type==='collect'){o.type='triangle';o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(0.08,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);o.start(now);o.stop(now+0.1);}else if(type==='crash'){o.type='sawtooth';o.frequency.setValueAtTime(150,now);o.frequency.exponentialRampToValueAtTime(30,now+0.4);g.gain.setValueAtTime(0.15,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.4);o.start(now);o.stop(now+0.4);}else if(type==='nearmiss'){o.frequency.setValueAtTime(800,now);o.frequency.exponentialRampToValueAtTime(1200,now+0.15);g.gain.setValueAtTime(0.1,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.15);o.start(now);o.stop(now+0.15);}else if(type==='combo'){o.type='square';o.frequency.setValueAtTime(600+combo*50,now);g.gain.setValueAtTime(0.08,now);g.gain.exponentialRampToValueAtTime(0.01,now+0.1);o.start(now);o.stop(now+0.1);}}
+function playSound(type,freq=440){
+    if(!audioCtx||!masterGain)return;
+    const now=Date.now();
+    if(now-lastSoundTime<30)return; // Throttle sounds
+    lastSoundTime=now;
+    try{
+        const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+        o.connect(g);g.connect(masterGain);
+        const t=audioCtx.currentTime;
+        if(type==='jump'){o.frequency.setValueAtTime(400,t);o.frequency.exponentialRampToValueAtTime(700,t+0.08);g.gain.setValueAtTime(0.08,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);o.start(t);o.stop(t+0.1);}
+        else if(type==='collect'){o.type='triangle';o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);o.start(t);o.stop(t+0.1);}
+        else if(type==='crash'){o.type='sawtooth';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(30,t+0.3);g.gain.setValueAtTime(0.12,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);o.start(t);o.stop(t+0.35);}
+        else if(type==='nearmiss'){o.frequency.setValueAtTime(800,t);o.frequency.exponentialRampToValueAtTime(1200,t+0.1);g.gain.setValueAtTime(0.08,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.1);o.start(t);o.stop(t+0.12);}
+        else if(type==='combo'){o.type='square';o.frequency.setValueAtTime(600+combo*50,t);g.gain.setValueAtTime(0.06,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);o.start(t);o.stop(t+0.1);}
+    }catch(e){}
+}
 
 // === HELPERS ===
 const $=id=>document.getElementById(id);
@@ -673,7 +688,7 @@ function updateMenu(){
 // === GAME ===
 function reset(){
     player={x:CFG.PLAYER.X,y:H/2,v:0,rot:0};
-    obstacles=[];items=[];particles=[];birds=[];fuelCans=[];projectiles=[];contrails=[];
+    obstacles.length=0;items.length=0;particles.length=0;birds.length=0;fuelCans.length=0;projectiles.length=0;contrails.length=0;
     money=0;parts=0;score=0;frame=0;speed=1;
     fuel=has('fuel')?150:100;
     combo=1;comboTimer=0;maxCombo=1;nearMissCount=0;
@@ -714,7 +729,7 @@ function updatePlayer(){const dt=deltaTime/16;player.v+=CFG.PLAYER.GRAVITY*dt;pl
 
 function updateObs(){
     const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*(deltaTime/16);
-    if(frame%Math.max(Math.floor(CFG.OBS.SPAWN/speed),35)===0&&!bossActive)spawnObs();
+    if(frame%Math.max(Math.floor(CFG.OBS.SPAWN/speed),35)===0&&!bossActive&&obstacles.length<15)spawnObs();
     for(let i=obstacles.length-1;i>=0;i--){
         const o=obstacles[i];o.x-=sp;
         // Collision
@@ -745,7 +760,7 @@ function updateObs(){
 
 function updateParts(){
     const sp=CFG.OBS.SPEED*speed*(turboOn?1.5:1)*(deltaTime/16);
-    if(frame%40===0)spawnPart();
+    if(frame%40===0&&items.length<20)spawnPart();
     const mr=has('magnet')?120:80;
     for(let i=items.length-1;i>=0;i--){
         const p=items[i];p.x-=sp;
@@ -767,7 +782,7 @@ function updateParts(){
 
 function updateBirds(){
     const sp=deltaTime/16;
-    if(frame%200===0&&Math.random()<0.3)spawnBird();
+    if(frame%200===0&&Math.random()<0.3&&birds.length<10)spawnBird();
     for(let i=birds.length-1;i>=0;i--){
         const b=birds[i];b.x+=b.vx*sp;b.y+=b.vy*sp;b.frame++;
         b.vy+=Math.sin(b.frame*0.1)*0.1;
@@ -781,7 +796,7 @@ function updateFuel(){
     const sp=CFG.OBS.SPEED*speed*(deltaTime/16);
     fuel-=CFG.FUEL.DRAIN*(deltaTime/16);
     if(fuel<=0){gameOver();return;}
-    if(frame%300===0&&Math.random()<0.4)spawnFuel();
+    if(frame%300===0&&Math.random()<0.4&&fuelCans.length<5)spawnFuel();
     for(let i=fuelCans.length-1;i>=0;i--){
         const f=fuelCans[i];f.x-=sp;
         const dx=player.x-f.x,dy=player.y-f.y;
@@ -809,19 +824,27 @@ function updateProjectiles(){
     for(let i=projectiles.length-1;i>=0;i--){
         const p=projectiles[i];p.x+=p.vx*(deltaTime/16);p.y+=p.vy*(deltaTime/16);
         if(Math.sqrt((player.x-p.x)**2+(player.y-p.y)**2)<35){if(shieldOn){shieldOn=false;vibrate('heavy');}else{gameOver();return;}projectiles.splice(i,1);continue;}
-        if(p.x<-50)projectiles.splice(i,1);
+        if(p.x<-50||p.x>W+50)projectiles.splice(i,1);
     }
+    if(projectiles.length>20)projectiles.length=20;
 }
 
 function updateContrails(){
-    if(frame%3===0)contrails.push({x:player.x-40,y:player.y,alpha:0.5,size:4});
+    if(frame%4===0&&contrails.length<50)contrails.push({x:player.x-40,y:player.y,alpha:0.4,size:3});
     for(let i=contrails.length-1;i>=0;i--){
-        const c=contrails[i];c.x-=2;c.alpha-=0.01;c.size+=0.1;
-        if(c.alpha<=0)contrails.splice(i,1);
+        const c=contrails[i];c.x-=2;c.alpha-=0.015;c.size+=0.08;
+        if(c.alpha<=0||c.x<-50)contrails.splice(i,1);
     }
+    if(contrails.length>50)contrails.length=50;
 }
 
-function updateParticles(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life-=0.02;if(p.life<=0)particles.splice(i,1);}}
+function updateParticles(){
+    for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.03;
+        if(p.life<=0||p.x<-50||p.x>W+50||p.y>H+50)particles.splice(i,1);
+    }
+    if(particles.length>100)particles.length=100;
+}
 
 function updateDifficulty(){if(speed<3)speed+=0.0004;}
 
@@ -938,8 +961,13 @@ function drawProjectiles(){ctx.fillStyle='#ff4444';projectiles.forEach(p=>{ctx.b
 function drawParticles(){particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color||'#fff';ctx.beginPath();ctx.arc(p.x,p.y,p.size||3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
 
 // === GAME LOOP ===
+let animFrameId=null;
 function loop(ts){
-    deltaTime=lastTime?Math.min(ts-lastTime,32):16;lastTime=ts;
+    deltaTime=lastTime?Math.min(ts-lastTime,50):16;lastTime=ts;
+    
+    // Clear canvas
+    ctx.clearRect(0,0,W,H);
+    
     drawBg();
     if(state==='playing'||state==='over'){
         drawContrails();drawObs();drawParts();drawFuel();drawBirds();
@@ -953,7 +981,8 @@ function loop(ts){
         if(gameMode==='normal'&&score>=CFG.BOSS_SPAWN&&!bossActive&&!boss)spawnBoss();
         updateHUD();
     }
-    frame++;requestAnimationFrame(loop);
+    frame++;
+    animFrameId=requestAnimationFrame(loop);
 }
 
 // === EVENTS ===
